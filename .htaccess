@@ -1,0 +1,12 @@
+RewriteEngine On
+RewriteBase /
+
+# 1. Si es la carpeta backapi, NO HACER NADA Y SALIR
+RewriteRule ^backapi($|/) - [L]
+
+# 2. Si el archivo existe (imagenes, js, css), cargarlo
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# 3. Todo lo demás a React
+RewriteRule . /index.html [L]

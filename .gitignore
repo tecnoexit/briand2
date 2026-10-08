@@ -1,0 +1,50 @@
+# ============================================
+# SECRETOS - nunca van al repositorio
+# ============================================
+backapi/.env
+backapi/.env.*
+!backapi/.env.example
+
+# ============================================
+# Dependencias (se instalan en el server)
+# ============================================
+backapi/vendor/
+backapi/node_modules/
+
+# ============================================
+# Datos y backups - NUNCA al repositorio
+# ============================================
+*.sql
+*.sql.gz
+*.dump
+*.sqlite
+*.sqlite3
+backup*
+
+# ============================================
+# Runtime de Laravel (se regenera solo)
+# ============================================
+backapi/storage/logs/*
+!backapi/storage/logs/.gitignore
+backapi/storage/framework/cache/data/*
+!backapi/storage/framework/cache/data/.gitignore
+backapi/storage/framework/sessions/*
+!backapi/storage/framework/sessions/.gitignore
+backapi/storage/framework/testing/*
+backapi/storage/framework/views/*
+!backapi/storage/framework/views/.gitignore
+backapi/bootstrap/cache/*.php
+!backapi/bootstrap/cache/.gitignore
+backapi/error_log
+
+# backapi/.gitignore ya excluye /public/storage:
+# el symlink se crea en el server con `ln -s ../storage/app/public backapi/public/storage`
+
+# ============================================
+# Basura de sistema / editores
+# ============================================
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/

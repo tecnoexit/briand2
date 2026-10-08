@@ -1,0 +1,24 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /backapi/
+
+    # 0. SEGURIDAD: fuera de public/ no se sirve nada
+    # (si no, /backapi/.env entrega APP_KEY + credenciales de BD)
+    RewriteRule ^(app|bootstrap|config|database|resources|routes|storage/(app|framework|logs|testing)|tests|vendor)(/|$) - [F,L]
+    RewriteRule ^(\.env(\..*)?|\.git.*|\.DS_Store|composer\.(json|lock)|package(-lock)?\.json|phpunit\.xml.*|artisan|vite\.config\.js|README\.md|error_log|\.editorconfig|\.gitattributes|\.gitignore|DO_NOT_UPLOAD_HERE)$ - [F,L]
+
+    # 1. Regla crítica para el Storage
+    # Si la URL pide /storage/..., lo mandamos directo al symlink en public
+    RewriteRule ^storage/(.*)$ public/storage/$1 [L,NC]
+
+    # 2. Si el archivo existe en public, servirlo (CSS, JS, etc)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{DOCUMENT_ROOT}/backapi/public/$1 -f
+    RewriteRule ^(.*)$ public/$1 [L]
+
+    # 3. Todo lo demás a Laravel
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ public/index.php [L]
+</IfModule>
