@@ -119,6 +119,18 @@ configurar_env() {
     fi
 }
 
+# ---------------------------------------------------------------- carpetas de escritura
+crear_carpetas_escritura() {
+    echo "== Carpetas de escritura =="
+    # git no versiona carpetas vacías: hay que recrearlas o /up y las vistas dan 500
+    mkdir -p "$APP/storage/framework/cache/data" \
+             "$APP/storage/framework/sessions" \
+             "$APP/storage/framework/views" \
+             "$APP/storage/framework/testing" \
+             "$APP/storage/logs"
+    ok "storage/framework/{cache/data,sessions,views} listos"
+}
+
 # ---------------------------------------------------------------- storage
 symlink_storage() {
     echo "== storage =="
@@ -203,6 +215,7 @@ fi
 chequear_requisitos
 instalar_vendor
 configurar_env
+crear_carpetas_escritura
 symlink_storage
 permisos
 cache_laravel
