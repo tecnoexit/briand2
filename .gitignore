@@ -10,6 +10,7 @@ backapi/.env.*
 # ============================================
 backapi/vendor/
 backapi/node_modules/
+frontend/node_modules/
 
 # ============================================
 # Datos y backups - NUNCA al repositorio
@@ -20,6 +21,8 @@ backapi/node_modules/
 *.sqlite
 *.sqlite3
 backup*
+# Excepción: dump de la BD de negocio que SÍ se versiona (para deploy en VPS)
+!database/ferreteria.sql
 
 # ============================================
 # Runtime de Laravel (se regenera solo)

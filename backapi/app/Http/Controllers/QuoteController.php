@@ -82,13 +82,15 @@ class QuoteController extends Controller
         ]);
 
         $clientType = $this->resolveClientType($request);
+        $isDeposito = $request->user()->role === 'deposito';
 
-        return DB::transaction(function () use ($request, $clientType) {
+        return DB::transaction(function () use ($request, $clientType, $isDeposito) {
             $taxRate = $request->input('tax_rate', 0);
 
             $subtotal = 0;
             foreach ($request->items as $item) {
-                $subtotal += $item['quantity'] * ($item['unit_price'] ?? 0);
+                $unitPrice = $isDeposito ? 0 : ($item['unit_price'] ?? 0);
+                $subtotal += $item['quantity'] * $unitPrice;
             }
             $taxAmount = ($subtotal * $taxRate) / 100;
             $total = $subtotal + $taxAmount;
@@ -108,9 +110,10 @@ class QuoteController extends Controller
                 'estado'         => $request->input('estado', 'pendiente'),
                 'valid_until'    => $request->input('valid_until') ?: now()->addDays(15),
                 'notes'          => $request->notes,
+                'sin_precios'    => $isDeposito,
             ]);
 
-            $this->syncItems($quote, $request->items);
+            $this->syncItems($quote, $request->items, $isDeposito);
 
             $quote->load(['items.product', 'seller']);
             if ($request->user()->role === 'deposito') {
@@ -166,6 +169,7 @@ class QuoteController extends Controller
         ]);
 
         return DB::transaction(function () use ($request, $quote) {
+            $isDeposito = $request->user()->role === 'deposito';
             $clientType = $request->has('client_id') || $request->has('client_name')
                 ? $this->resolveClientType($request)
                 : $quote->client_type;
@@ -183,7 +187,8 @@ class QuoteController extends Controller
 
                 $subtotal = 0;
                 foreach ($request->items as $item) {
-                    $subtotal += $item['quantity'] * ($item['unit_price'] ?? 0);
+                    $unitPrice = $isDeposito ? 0 : ($item['unit_price'] ?? 0);
+                    $subtotal += $item['quantity'] * $unitPrice;
                 }
                 $taxAmount = ($subtotal * $taxRate) / 100;
 
@@ -191,10 +196,11 @@ class QuoteController extends Controller
                 $quote->subtotal   = $subtotal;
                 $quote->tax_amount = $taxAmount;
                 $quote->total      = $subtotal + $taxAmount;
+                $quote->sin_precios = $isDeposito;
 
                 $quote->items()->delete();
                 $quote->save();
-                $this->syncItems($quote, $request->items);
+                $this->syncItems($quote, $request->items, $isDeposito);
             } else {
                 $quote->save();
             }
@@ -249,10 +255,10 @@ class QuoteController extends Controller
     /**
      * Crea los items del presupuesto.
      */
-    private function syncItems(Quote $quote, array $items): void
+    private function syncItems(Quote $quote, array $items, bool $zeroPrices = false): void
     {
         foreach ($items as $item) {
-            $unitPrice  = $item['unit_price'] ?? 0;
+            $unitPrice  = $zeroPrices ? 0 : ($item['unit_price'] ?? 0);
             $totalPrice = $item['quantity'] * $unitPrice;
             QuoteItem::create([
                 'quote_id'     => $quote->id,

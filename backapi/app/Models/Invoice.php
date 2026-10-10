@@ -22,6 +22,7 @@ class Invoice extends Model
         'tax_amount',
         'total',
         'notes',
+        'modification_reason',
     ];
 
     protected $casts = [

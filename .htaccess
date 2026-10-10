@@ -4,6 +4,9 @@ RewriteBase /
 # 1. Si es la carpeta backapi, NO HACER NADA Y SALIR
 RewriteRule ^backapi($|/) - [L]
 
+# 1.b Bloquear acceso web al código fuente del frontend (React/Vite)
+RewriteRule ^frontend($|/) - [F,L]
+
 # 2. Si el archivo existe (imagenes, js, css), cargarlo
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

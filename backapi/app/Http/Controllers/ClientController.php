@@ -12,7 +12,15 @@ class ClientController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Client::where('active', true);
+        $query = Client::query();
+
+        // Filtro por estado (status=active|inactive|all). Por defecto, solo activos.
+        $status = $request->get('status', 'active');
+        if ($status === 'active') {
+            $query->where('active', true);
+        } elseif ($status === 'inactive') {
+            $query->where('active', false);
+        }
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -28,7 +36,13 @@ class ClientController extends Controller
             $query->where('type', $request->type);
         }
 
-        return response()->json($query->orderBy('name')->limit(50)->get());
+        // Límite configurable (por defecto 50, máximo 1000).
+        $limit = (int) $request->get('limit', 50);
+        if ($limit <= 0 || $limit > 1000) {
+            $limit = 50;
+        }
+
+        return response()->json($query->orderBy('name')->limit($limit)->get());
     }
 
     /**

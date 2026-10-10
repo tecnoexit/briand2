@@ -1,24 +1,32 @@
 # Ferretería De2 — sitio + API
 
-Sitio completo de la ferretería: **SPA de React (build compilado) + API en Laravel 12**.
-Este repositorio está pensado para clonarlo en un servidor Debian/Ubuntu y dejarlo andando.
+Sistema completo de la ferretería: **SPA en React (Vite) + API en Laravel 12**.
+Pensado para clonar en un VPS Debian/Ubuntu y dejarlo andando con la base de datos ya cargada.
 
 ```
 /
-├── index.html              # entry del front (build de Vite/React)
-├── assets/                 # JS + CSS compilados + imágenes del front
-├── .htaccess               # SPA: todo lo que no sea archivo → index.html
-├── backapi/
-│   ├── app/                # controllers, models, middleware (API)
-│   ├── config/ routes/ database/ tests/
-│   ├── public/             # index.php + .htaccess (acá entra Laravel)
-│   │   └── storage         # → symlink a ../storage/app/public (lo crea instalar.sh)
+├── index.html               # SPA compilado (lo genera `npm run build` del frontend)
+├── assets/                  # JS + CSS compilados del SPA
+├── .htaccess                # SPA: todo lo que no sea archivo → index.html
+├── frontend/                # FUENTE del frontend (React + Vite + Tailwind)
+│   ├── src/                 #   páginas, componentes, api, lib
+│   ├── package.json
+│   └── vite.config.js       #   build escribe en la raíz (../) y assets/
+├── database/
+│   └── ferreteria.sql       # dump de la BD de negocio (productos, clientes, facturas…)
+├── backapi/                 # API Laravel 12
+│   ├── app/                 #   controllers, models, middleware
+│   ├── routes/              #   api.php (rutas + roles)
+│   ├── database/migrations/ #   migraciones
 │   ├── storage/app/public/products/   # 9690 fotos de productos (incluidas)
-│   ├── .env.example        # plantilla de entorno
-│   └── .htaccess           # rutea /backapi/* → public/ + bloquea archivos sensibles
-├── instalar.sh             # instalación asistida (Debian/Ubuntu)
-└── README.md               # este archivo
+│   ├── .env.example         #   plantilla de entorno
+│   └── .htaccess            #   rutea /backapi/* → public/ + bloquea archivos sensibles
+├── instalar.sh              # instalación asistida (Debian/Ubuntu)
+└── README.md
 ```
+
+- La API se sirve en `/backapi/api` y el SPA se sirve en la raíz `/`.
+- La URL de la API va embebida en los bundles como `/backapi` (relativa al host).
 
 ---
 
@@ -26,8 +34,9 @@ Este repositorio está pensado para clonarlo en un servidor Debian/Ubuntu y deja
 
 | | |
 |---|---|
-| PHP | **8.4** (también anda 8.3) con `mysql pdo_mysql mbstring openssl curl fileinfo zip bcmath xml dom intl tokenizer gd` |
+| PHP | **8.4** (también 8.3) con `mysql pdo_mysql mbstring openssl curl fileinfo zip bcmath xml dom intl tokenizer gd` |
 | Composer | 2.x |
+| Node | 20+ (solo para compilar el frontend) |
 | BD | MariaDB 10.11+ / 11.x o MySQL 8 |
 | Web | Apache 2.4 con `mod_rewrite` (los `.htaccess` ya están listos) o Nginx (ver abajo) |
 
@@ -53,7 +62,7 @@ a2enmod rewrite headers expires
 ### Opción A — script asistido
 
 ```bash
-git clone https://github.com/tecnoexit/ferreteriad2.git /var/www/ferreteriad2
+git clone https://github.com/tecnoexit/briand2.git /var/www/ferreteriad2
 cd /var/www/ferreteriad2
 chmod +x instalar.sh
 sudo ./instalar.sh --deps      # instala paquetes (solo la primera vez)
@@ -63,7 +72,7 @@ sudo ./instalar.sh --deps      # instala paquetes (solo la primera vez)
 ### Opción B — manual
 
 ```bash
-git clone https://github.com/tecnoexit/ferreteriad2.git /var/www/ferreteriad2
+git clone https://github.com/tecnoexit/briand2.git /var/www/ferreteriad2
 cd /var/www/ferreteriad2
 
 # 1) dependencias PHP (no sube vendor/ al repo: se instala acá)
@@ -74,10 +83,10 @@ cp backapi/.env.example backapi/.env
 nano backapi/.env
 ```
 
-En `.env` tenés que completar:
+En `.env` completá:
 
 ```dotenv
-APP_URL=https://TUDOMINIO.com/backapi   # armá las URLs de las imágenes con esto
+APP_URL=https://TUDOMINIO.com/backapi   # arma las URLs de las imágenes con esto
 APP_KEY=                                 # ver nota de abajo
 DB_DATABASE=ferreteria
 DB_USERNAME=ferreteria_app
@@ -105,32 +114,52 @@ php artisan up
 
 ---
 
-## Base de datos
+## Base de datos (ya cargada)
 
-**El dump de la base NO está en el repositorio** (repo público: contiene clientes, facturas,
-emails y hashes de contraseñas). Tenés que traerlo por un canal privado desde el server
-anterior, o bien crear una BD vacía:
+El repo incluye un dump de la base de negocio en **`database/ferreteria.sql`**
+(productos, clientes, facturas, presupuestos, usuarios). Para cargarla:
 
 ```bash
+# crear BD y usuario de la app
 mariadb -u root -e "CREATE DATABASE ferreteria CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER 'ferreteria_app'@'localhost' IDENTIFIED BY '<pass>';
 GRANT ALL ON ferreteria.* TO 'ferreteria_app'@'localhost'; FLUSH PRIVILEGES;"
 
-# con dump:
-tail -n +2 respaldo.sql > /tmp/limpio.sql       # la 1ª línea rompe clientes viejos
-mariadb -u root ferreteria < /tmp/limpio.sql
-php artisan migrate:status                      # debe decir "Ran" en todo
-
-# sin dump (BD nueva):
-php artisan migrate --seed
+# importar el dump
+mariadb -u root ferreteria < database/ferreteria.sql
 ```
 
-Después de restaurar un respaldo de producción, limpiá el estado que se arrastra:
+> El dump incluye la tabla `migrations`, por lo que la BD queda al día con el código.
+> Si después traés código nuevo con migraciones, corré `php artisan migrate --force`.
+
+Si preferís una BD vacía (sin datos):
 
 ```bash
-mariadb -u root -e "USE ferreteria;
-TRUNCATE sessions; TRUNCATE cache; TRUNCATE cache_locks;
-TRUNCATE jobs; TRUNCATE job_batches; TRUNCATE failed_jobs;"
+cd backapi && php artisan migrate --seed
+```
+
+> **Contraseñas de usuarios**: el dump trae los usuarios con sus hashes. Si no conocés
+> las claves, resetéalas con `php artisan tinker` o el seeder.
+
+---
+
+## Compilar el frontend (build)
+
+El frontend **sí** está versionado en `frontend/`. Para recompilarlo:
+
+```bash
+cd frontend
+npm install
+npm run build        # escribe index.html + assets/ directamente en la raíz del repo
+```
+
+`vite.config.js` tiene `outDir: '../'` y `emptyOutDir: false`, así el build reemplaza el
+SPA compilado de la raíz (`index.html` + `assets/`) sin borrar nada más.
+
+Para desarrollo con hot-reload (proxea `/backapi` al server local):
+
+```bash
+cd frontend && npm run dev
 ```
 
 ---
@@ -214,9 +243,27 @@ curl -s -H "Accept: application/json" -H "Content-Type: application/json" \
   -d '{"email":"admin@sys.com","password":"tu-password"}'                     # 200 + token
 ```
 
-Y a mano: login, listado de productos **con fotos**, alta/edición de producto (la imagen
-tiene que quedar en `backapi/storage/app/public/products` y verse por `/backapi/storage/...`),
-facturación y presupuestos.
+---
+
+## Flujo de trabajo / versionado
+
+```bash
+cd /var/www/ferreteriad2
+git pull
+
+# backend (si cambió)
+composer install --no-dev --optimize-autoloader
+cd backapi && php artisan migrate --force
+
+# frontend (si cambió)
+cd ../frontend && npm install && npm run build
+
+# caché de Laravel
+cd ../backapi && php artisan config:cache && php artisan route:cache && php artisan view:cache
+
+# permisos (si el build corrió como otro usuario)
+chown -R www-data:www-data /var/www/ferreteriad2
+```
 
 ---
 
@@ -225,22 +272,13 @@ facturación y presupuestos.
 - **La URL de la API está embebida en los bundles JS como `/backapi`** (relativa al host).
   Funciona con cualquier dominio **mientras el sitio esté en la raíz**. Si lo acomodás en
   una subcarpeta hay que tocar `RewriteBase` del `.htaccess` raíz, las rutas absolutas de
-  `index.html` y el `basename` del router (`/`, `/admin`, `/vendedor`, `/client`).
+  `index.html` y el `basename` del router (`/`, `/admin`, `/vendedor`, `/deposito`, `/client`).
 - **`backapi/.htaccess` bloquea `.env`, `app/`, `config/`, `vendor/`, `database/`… con 403.**
   No lo quites: sin esa regla `/backapi/.env` entrega la APP_KEY y la password de la BD.
+- **`frontend/` está bloqueado por HTTP (403)** desde el `.htaccess` raíz: el navegador no
+  debe servir el source de React, solo el build de la raíz.
 - **Colas y cron**: no hacen falta. No hay `dispatch()` ni `Schedule` en el código.
-- **Deploy de actualizaciones**:
-  ```bash
-  cd /var/www/ferreteriad2 && git pull
-  composer install --no-dev --optimize-autoloader
-  cd backapi && php artisan down && php artisan migrate --force \
-    && php artisan config:cache && php artisan route:cache && php artisan view:cache \
-    && php artisan up
-  ```
 - **Backups**: `mysqldump` de la BD **y** de `backapi/storage/app/public/` (303 MB de fotos
-  que no están en ningún dump SQL).
+  que no están en el dump SQL).
 - `backapi/resources/` contiene copias duplicadas viejas de `app/` y `database/` (herencia
   del server anterior). Laravel no las usa; se dejan por fidelidad al original.
-- El front **no tiene source en este repo**, solo el build. Si hay que regenerarlo, hace
-  falta el proyecto de Vite/React original (reemplazar `https://.../backapi` por
-  `import.meta.env.VITE_API_URL` en vez de hardcodear).

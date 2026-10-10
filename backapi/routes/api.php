@@ -33,10 +33,19 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // --- Gestión de Productos ---
-    Route::put('/products/bulk', [ProductController::class, 'bulkUpdate']);
+    // Lectura para todos los roles autenticados (el index filtra por visibilidad).
+    Route::get('/products', [ProductController::class, 'index']);
     // Devuelve la imagen del producto como data URL en base64 (sortea CORS para canvas/PDF).
     Route::get('/products/{product}/image-base64', [ProductController::class, 'imageBase64']);
-    Route::apiResource('products', ProductController::class);
+    Route::get('/products/{product}', [ProductController::class, 'show']);
+
+    // Escritura de productos: solo admin.
+    Route::middleware('role:admin')->group(function () {
+        Route::put('/products/bulk', [ProductController::class, 'bulkUpdate']);
+        Route::post('/products', [ProductController::class, 'store']);
+        Route::put('/products/{product}', [ProductController::class, 'update']);
+        Route::delete('/products/{product}', [ProductController::class, 'destroy']);
+    });
 
     // --- Gestión de Monedas / Cotizaciones ---
     Route::apiResource('currencies', CurrencyController::class);

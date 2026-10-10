@@ -120,7 +120,20 @@ class ProductController extends Controller
         }
         return response()->json($paginated);
     }
-    
+
+    /**
+     * Ver un producto puntual. Oculta los campos de precio para el rol depósito.
+     */
+    public function show(Request $request, Product $product)
+    {
+        if (optional($request->user())->role === 'deposito') {
+            $product->makeHidden(['precio_lista', 'price', 'impuesto', 'profit_margin',
+                'distribuidor_discount_enabled', 'distribuidor_discount_percent']);
+        }
+
+        return response()->json($product);
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([

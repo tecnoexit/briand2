@@ -24,14 +24,16 @@ class Quote extends Model
         'estado',
         'valid_until',
         'notes',
+        'sin_precios',
     ];
 
     protected $casts = [
-        'subtotal'    => 'decimal:2',
-        'tax_rate'    => 'decimal:2',
-        'tax_amount'  => 'decimal:2',
-        'total'       => 'decimal:2',
-        'valid_until' => 'date',
+        'subtotal'     => 'decimal:2',
+        'tax_rate'     => 'decimal:2',
+        'tax_amount'   => 'decimal:2',
+        'total'        => 'decimal:2',
+        'valid_until'  => 'date',
+        'sin_precios'  => 'boolean',
     ];
 
     protected $attributes = [

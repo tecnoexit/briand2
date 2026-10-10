@@ -114,6 +114,7 @@ class InvoiceController extends Controller
             'payment_method' => 'required|string|in:efectivo,cheque,transferencia,credito',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
             'notes' => 'nullable|string',
+            'modification_reason' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'nullable|integer|exists:products,id',
             'items.*.product_name' => 'required|string|max:255',
@@ -196,6 +197,7 @@ class InvoiceController extends Controller
                 'tax_amount' => $taxAmount,
                 'total' => $total,
                 'notes' => $request->notes,
+                'modification_reason' => $request->modification_reason,
             ]);
 
             foreach ($request->items as $item) {
@@ -234,6 +236,7 @@ class InvoiceController extends Controller
             'payment_method'       => 'required|string|in:efectivo,cheque,transferencia,credito',
             'tax_rate'             => 'nullable|numeric|min:0|max:100',
             'notes'                => 'nullable|string',
+            'modification_reason'  => 'nullable|string',
             'items'                => 'required|array|min:1',
             'items.*.product_id'   => 'nullable|integer|exists:products,id',
             'items.*.product_name' => 'required|string|max:255',
@@ -273,6 +276,7 @@ class InvoiceController extends Controller
                 'tax_amount'     => $taxAmount,
                 'total'          => $subtotal + $taxAmount,
                 'notes'          => $request->notes,
+                'modification_reason' => $request->modification_reason,
             ]);
 
             $invoice->items()->delete();

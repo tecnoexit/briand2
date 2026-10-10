@@ -1,0 +1,111 @@
+import { Plus, Trash2 } from 'lucide-react'
+import { formatMoney } from '../lib/format'
+import { addManualItem } from '../lib/items'
+
+export default function ItemsTable({ items, onChange, symbol = '$', showPrices = true }) {
+  const updateItem = (key, field, value) =>
+    onChange(items.map((it) => (it.key === key ? { ...it, [field]: value } : it)))
+
+  const removeItem = (key) => onChange(items.filter((it) => it.key !== key))
+
+  const addManual = () => onChange(addManualItem(items))
+
+  const colSpan = showPrices ? 6 : 4
+
+  return (
+    <div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 text-left text-[11px] font-bold uppercase text-slate-500">
+              <th className="py-2 pr-2">Código</th>
+              <th className="w-20 py-2 text-center">Cant.</th>
+              <th className="py-2 pr-2">Descripción</th>
+              {showPrices && <th className="w-28 py-2 text-right">P. Unit.</th>}
+              {showPrices && <th className="w-28 py-2 text-right">P. Total</th>}
+              <th className="w-8" />
+            </tr>
+          </thead>
+          <tbody>
+            {items.length === 0 ? (
+              <tr>
+                <td colSpan={colSpan} className="py-10 text-center text-slate-400">
+                  Buscá y agregá productos desde el panel derecho
+                </td>
+              </tr>
+            ) : (
+              items.map((it) => (
+                <tr key={it.key} className="border-b border-slate-100 align-top">
+                  <td className="py-2 pr-2">
+                    <input
+                      value={it.product_code}
+                      onChange={(e) => updateItem(it.key, 'product_code', e.target.value)}
+                      className="w-24 rounded border border-slate-200 px-2 py-1 text-xs"
+                    />
+                  </td>
+                  <td className="py-2 text-center">
+                    <input
+                      type="number"
+                      min={1}
+                      value={it.quantity}
+                      onChange={(e) =>
+                        updateItem(it.key, 'quantity', Math.max(1, Number(e.target.value)))
+                      }
+                      className="w-16 rounded border border-slate-200 px-2 py-1 text-center text-sm"
+                    />
+                  </td>
+                  <td className="py-2 pr-2">
+                    <input
+                      value={it.product_name}
+                      onChange={(e) => updateItem(it.key, 'product_name', e.target.value)}
+                      placeholder="Producto"
+                      className="w-full rounded border border-slate-200 px-2 py-1 text-sm"
+                    />
+                    <input
+                      value={it.notes}
+                      onChange={(e) => updateItem(it.key, 'notes', e.target.value)}
+                      placeholder="Nota del ítem (opcional)"
+                      className="mt-1 w-full rounded border border-slate-200 px-2 py-1 text-xs text-slate-600"
+                    />
+                  </td>
+                  {showPrices && (
+                    <td className="py-2 text-right">
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={it.unit_price}
+                        onChange={(e) => updateItem(it.key, 'unit_price', Number(e.target.value))}
+                        className="w-24 rounded border border-slate-200 px-2 py-1 text-right text-sm"
+                      />
+                    </td>
+                  )}
+                  {showPrices && (
+                    <td className="py-2 text-right font-medium text-slate-700">
+                      {formatMoney(Number(it.quantity || 0) * Number(it.unit_price || 0), symbol)}
+                    </td>
+                  )}
+                  <td className="py-2 text-right">
+                    <button
+                      onClick={() => removeItem(it.key)}
+                      className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <button
+        onClick={addManual}
+        className="mt-3 flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-800"
+      >
+        <Plus size={16} /> Agregar ítem manual
+      </button>
+    </div>
+  )
+}
