@@ -636,6 +636,35 @@ export default function Products() {
         </select>
       </div>
 
+      {meta.last_page > 1 && (
+        <div className="mb-4 flex flex-col items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row">
+          <div className="text-xs text-slate-500">
+            Mostrando <span className="font-bold text-slate-700">{meta.from}</span> a{' '}
+            <span className="font-bold text-slate-700">{meta.to}</span> de{' '}
+            <span className="font-bold text-slate-700">{meta.total}</span> productos
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={page <= 1 || loading}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="rounded-lg border border-slate-300 p-1.5 disabled:opacity-40"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-xs font-medium text-slate-600">
+              Página <span className="text-green-700">{page}</span> de {meta.last_page}
+            </span>
+            <button
+              disabled={page >= meta.last_page || loading}
+              onClick={() => setPage((p) => p + 1)}
+              className="rounded-lg border border-slate-300 p-1.5 disabled:opacity-40"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -964,35 +993,6 @@ export default function Products() {
             </tbody>
           </table>
         </div>
-
-        {meta.last_page > 1 && (
-          <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row">
-            <div className="text-xs text-slate-500">
-              Mostrando <span className="font-bold text-slate-700">{meta.from}</span> a{' '}
-              <span className="font-bold text-slate-700">{meta.to}</span> de{' '}
-              <span className="font-bold text-slate-700">{meta.total}</span> productos
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                disabled={page <= 1 || loading}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="rounded-lg border border-slate-300 p-1.5 disabled:opacity-40"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="text-xs font-medium text-slate-600">
-                Página <span className="text-green-700">{page}</span> de {meta.last_page}
-              </span>
-              <button
-                disabled={page >= meta.last_page || loading}
-                onClick={() => setPage((p) => p + 1)}
-                className="rounded-lg border border-slate-300 p-1.5 disabled:opacity-40"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {formOpen && (

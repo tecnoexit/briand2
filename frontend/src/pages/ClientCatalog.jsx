@@ -366,6 +366,33 @@ export default function ClientCatalog() {
           </div>
         </div>
 
+        {!loading && products.length > 0 && (
+          <div className="mb-4 flex items-center justify-between text-sm">
+            <span className={t.sub}>
+              {meta.total.toLocaleString('es-AR')} productos · página {meta.page} de{' '}
+              {meta.lastPage}
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={!canPrev}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className={`rounded-lg border px-3 py-1.5 font-medium transition-colors ${t.pageBtn}`}
+              >
+                Anterior
+              </button>
+              <button
+                type="button"
+                disabled={!canNext}
+                onClick={() => setPage((p) => p + 1)}
+                className={`rounded-lg border px-3 py-1.5 font-medium transition-colors ${t.pageBtn}`}
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className={`overflow-hidden rounded-xl border shadow-sm ${t.card}`}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -459,33 +486,6 @@ export default function ClientCatalog() {
             </div>
           )}
         </div>
-
-        {!loading && products.length > 0 && (
-          <div className="mt-4 flex items-center justify-between text-sm">
-            <span className={t.sub}>
-              {meta.total.toLocaleString('es-AR')} productos · página {meta.page} de{' '}
-              {meta.lastPage}
-            </span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={!canPrev}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className={`rounded-lg border px-3 py-1.5 font-medium transition-colors ${t.pageBtn}`}
-              >
-                Anterior
-              </button>
-              <button
-                type="button"
-                disabled={!canNext}
-                onClick={() => setPage((p) => p + 1)}
-                className={`rounded-lg border px-3 py-1.5 font-medium transition-colors ${t.pageBtn}`}
-              >
-                Siguiente
-              </button>
-            </div>
-          </div>
-        )}
       </main>
     </div>
   )

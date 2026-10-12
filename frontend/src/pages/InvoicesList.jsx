@@ -314,6 +314,30 @@ export default function InvoicesList() {
         </div>
       </div>
 
+      {meta.last_page > 1 && (
+        <div className="mb-4 flex items-center justify-between text-sm text-slate-600">
+          <span>
+            Página {meta.current_page} de {meta.last_page} · {meta.total} facturas
+          </span>
+          <div className="flex gap-2">
+            <button
+              disabled={meta.current_page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-40"
+            >
+              Anterior
+            </button>
+            <button
+              disabled={meta.current_page >= meta.last_page}
+              onClick={() => setPage((p) => p + 1)}
+              className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-40"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         <table className="w-full border-collapse text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
@@ -384,30 +408,6 @@ export default function InvoicesList() {
           </tbody>
         </table>
       </div>
-
-      {meta.last_page > 1 && (
-        <div className="mt-4 flex items-center justify-between text-sm text-slate-600">
-          <span>
-            Página {meta.current_page} de {meta.last_page} · {meta.total} facturas
-          </span>
-          <div className="flex gap-2">
-            <button
-              disabled={meta.current_page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-40"
-            >
-              Anterior
-            </button>
-            <button
-              disabled={meta.current_page >= meta.last_page}
-              onClick={() => setPage((p) => p + 1)}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 disabled:opacity-40"
-            >
-              Siguiente
-            </button>
-          </div>
-        </div>
-      )}
 
       {openId && <InvoiceDetail id={openId} onClose={closeDetail} />}
     </div>
