@@ -37,6 +37,8 @@ WEB_USER="www-data"                    # usuario del servidor web (Apache/Nginx)
 # -----------------------------------------------------------------------------
 echo "==> [1/5] Actualizando código (git pull)…"
 cd "$APP_DIR"
+# Evita "detected dubious ownership" si el repo quedó de otro dueño (ej. www-data)
+git config --global --add safe.directory "$APP_DIR" 2>/dev/null || true
 git pull
 
 # -----------------------------------------------------------------------------
