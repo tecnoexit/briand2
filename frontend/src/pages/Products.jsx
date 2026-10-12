@@ -45,6 +45,13 @@ const EMPTY_PRODUCT = {
 
 const costo = (lista, imp) => (Number(lista) || 0) * (1 + (Number(imp) || 0) / 100)
 
+const ageColorClass = (dateStr) => {
+  const ageDays = (Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24)
+  if (ageDays >= 60) return 'text-red-600'
+  if (ageDays >= 30) return 'text-amber-600'
+  return 'text-green-600'
+}
+
 function findCurrency(currencies, id) {
   return currencies.find((c) => c.id === id)
 }
@@ -917,7 +924,11 @@ export default function Products() {
                           product.stock
                         )}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right text-[10px] text-slate-400">
+                      <td
+                        className={`whitespace-nowrap px-4 py-3 text-right text-[10px] font-semibold ${ageColorClass(
+                          product.updated_at,
+                        )}`}
+                      >
                         {new Date(product.updated_at).toLocaleString('es-AR', {
                           day: '2-digit',
                           month: '2-digit',

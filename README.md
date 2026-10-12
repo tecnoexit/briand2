@@ -280,5 +280,3 @@ chown -R www-data:www-data /var/www/ferreteriad2
 - **Colas y cron**: no hacen falta. No hay `dispatch()` ni `Schedule` en el código.
 - **Backups**: `mysqldump` de la BD **y** de `backapi/storage/app/public/` (303 MB de fotos
   que no están en el dump SQL).
-- `backapi/resources/` contiene copias duplicadas viejas de `app/` y `database/` (herencia
-  del server anterior). Laravel no las usa; se dejan por fidelidad al original.

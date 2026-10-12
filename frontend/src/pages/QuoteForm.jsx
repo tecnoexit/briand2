@@ -4,7 +4,7 @@ import { FileText, Loader2, Save } from 'lucide-react'
 import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { PAYMENT_METHODS, QUOTE_ESTADOS, isAdmin } from '../lib/roles'
-import { formatMoney } from '../lib/format'
+import { formatMoney, round2, unitPriceFor } from '../lib/format'
 import { addProductToItems } from '../lib/items'
 import ClientSection from '../components/ClientSection'
 import ProductsPanel from '../components/ProductsPanel'
@@ -56,11 +56,14 @@ export default function QuoteForm() {
   }, [])
 
   useEffect(() => {
-    if (!editId) return
+    if (!editId || currencies.length === 0) return
+    let active = true
     setLoading(true)
     api
       .get(`/quotes/${editId}`)
-      .then(({ data }) => {
+      .then(async ({ data }) => {
+        if (!active) return
+        const isDist = data.client_type === 'distribuidor'
         setClient({
           id: data.client_id,
           name: data.client_name,
@@ -75,21 +78,45 @@ export default function QuoteForm() {
         setNotes(data.notes || '')
         if (data.created_at) setDateLabel(new Date(data.created_at).toLocaleDateString('es-AR'))
         if (data.seller?.name) setSellerName(data.seller.name)
+
+        const ids = [...new Set((data.items || []).map((it) => it.product_id).filter(Boolean))]
+        const map = {}
+        await Promise.all(
+          ids.map(async (pid) => {
+            try {
+              map[pid] = (await api.get(`/products/${pid}`)).data
+            } catch {
+              // producto inexistente
+            }
+          }),
+        )
+        if (!active) return
         setItems(
-          (data.items || []).map((it, idx) => ({
-            key: `it-${it.id ?? idx}`,
-            product_id: it.product_id,
-            product_name: it.product_name,
-            product_code: it.product_code,
-            quantity: it.quantity,
-            unit_price: Number(it.unit_price || 0),
-            notes: it.notes || '',
-          })),
+          (data.items || []).map((it, idx) => {
+            const product = it.product_id ? map[it.product_id] : null
+            const price = product
+              ? round2(unitPriceFor(product, isDist, currencies))
+              : Number(it.unit_price || 0)
+            return {
+              key: `it-${it.id ?? idx}`,
+              product_id: it.product_id,
+              product_name: it.product_name,
+              product_code: it.product_code,
+              quantity: it.quantity,
+              unit_price: price,
+              notes: it.notes || '',
+            }
+          }),
         )
       })
       .catch(() => setError('No se pudo cargar el presupuesto'))
-      .finally(() => setLoading(false))
-  }, [editId])
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [editId, currencies])
 
   const subtotal = useMemo(
     () => items.reduce((acc, it) => acc + Number(it.quantity || 0) * Number(it.unit_price || 0), 0),
