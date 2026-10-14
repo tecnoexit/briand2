@@ -115,6 +115,7 @@ class InvoiceController extends Controller
             'tax_rate' => 'nullable|numeric|min:0|max:100',
             'notes' => 'nullable|string',
             'modification_reason' => 'nullable|string',
+            'seller_id' => 'nullable|integer|exists:users,id',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'nullable|integer|exists:products,id',
             'items.*.product_name' => 'required|string|max:255',
@@ -184,13 +185,20 @@ class InvoiceController extends Controller
             $taxAmount = ($subtotal * $taxRate) / 100;
             $total = $subtotal + $taxAmount;
 
+            // El vendedor que hizo la venta: si un admin factura un presupuesto
+            // de un vendedor, se conserva el vendedor original.
+            $sellerId = $request->user()->id;
+            if ($request->user()->role === 'admin' && $request->filled('seller_id')) {
+                $sellerId = (int) $request->seller_id;
+            }
+
             $invoice = Invoice::create([
                 'client_id' => $request->client_id,
                 'client_name' => $request->client_name,
                 'client_phone' => $request->client_phone,
                 'client_email' => $request->client_email,
                 'client_type' => $clientType,
-                'seller_id' => $request->user()->id,
+                'seller_id' => $sellerId,
                 'payment_method' => $request->payment_method,
                 'subtotal' => $subtotal,
                 'tax_rate' => $taxRate,

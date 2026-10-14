@@ -36,6 +36,7 @@ export default function InvoiceForm() {
   const [modificationReason, setModificationReason] = useState('')
   const [dateLabel, setDateLabel] = useState(() => new Date().toLocaleDateString('es-AR'))
   const [sellerName, setSellerName] = useState(() => user?.name || '—')
+  const [sellerId, setSellerId] = useState(null)
 
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -103,6 +104,8 @@ export default function InvoiceForm() {
         setTaxRate(0)
         setNotes(data.notes || '')
         if (data.created_at) setDateLabel(new Date(data.created_at).toLocaleDateString('es-AR'))
+        if (data.seller?.name) setSellerName(data.seller.name)
+        if (data.seller_id) setSellerId(data.seller_id)
 
         const ids = [...new Set((data.items || []).map((it) => it.product_id).filter(Boolean))]
         const map = {}
@@ -187,6 +190,7 @@ export default function InvoiceForm() {
     }
     const payload = {
       ...buildPayload(),
+      seller_id: sellerId || undefined,
       modification_reason: editId ? modificationReason || null : undefined,
     }
     setSaving(true)
