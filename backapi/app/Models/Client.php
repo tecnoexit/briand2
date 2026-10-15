@@ -16,10 +16,14 @@ class Client extends Model
         'address',
         'active',
         'type', // 'regular' | 'distribuidor'
+        'seller_id',
+        'assigned_by',
+        'assigned_at',
     ];
 
     protected $casts = [
         'active' => 'boolean',
+        'assigned_at' => 'datetime',
     ];
 
     /**
@@ -38,5 +42,15 @@ class Client extends Model
     public function invoices()
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    public function seller()
+    {
+        return $this->belongsTo(User::class, 'seller_id');
+    }
+
+    public function assignedBy()
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
     }
 }

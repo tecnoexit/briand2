@@ -12,7 +12,7 @@ class ClientController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Client::query();
+        $query = Client::with('seller');
 
         // Filtro por estado (status=active|inactive|all). Por defecto, solo activos.
         $status = $request->get('status', 'active');
@@ -34,6 +34,13 @@ class ClientController extends Controller
         // Filtro opcional por tipo (?type=regular|distribuidor)
         if ($request->filled('type')) {
             $query->where('type', $request->type);
+        }
+
+        // Filtro por vendedor asignado (?seller_id=) o por sin asignar (?unassigned=1).
+        if ($request->filled('seller_id')) {
+            $query->where('seller_id', $request->seller_id);
+        } elseif ($request->boolean('unassigned')) {
+            $query->whereNull('seller_id');
         }
 
         // Límite configurable (por defecto 50, máximo 1000).
@@ -80,5 +87,30 @@ class ClientController extends Controller
         $client->update($request->only(['name', 'phone', 'email', 'address', 'active', 'type']));
 
         return response()->json($client);
+    }
+
+    /**
+     * Asignar, cambiar o quitar el vendedor responsable de un cliente (solo admin).
+     * Registra quién realizó el cambio y cuándo (auditoría).
+     */
+    public function assignSeller(Request $request, Client $client)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Solo admin puede asignar clientes'], 403);
+        }
+
+        $request->validate([
+            'seller_id' => 'nullable|integer|exists:users,id',
+        ]);
+
+        $sellerId = $request->filled('seller_id') ? (int) $request->seller_id : null;
+
+        $client->update([
+            'seller_id'   => $sellerId,
+            'assigned_by' => $request->user()->id,
+            'assigned_at' => now(),
+        ]);
+
+        return response()->json($client->load(['seller', 'assignedBy']));
     }
 }

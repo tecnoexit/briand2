@@ -15,6 +15,8 @@ import ClientCatalog from './pages/ClientCatalog'
 import Products from './pages/Products'
 import CuentaCorriente from './pages/CuentaCorriente'
 import SellerAccount from './pages/SellerAccount'
+import ClientAssignment from './pages/ClientAssignment'
+import MyClients from './pages/MyClients'
 
 function HomeRedirect() {
   const { user, loading } = useAuth()
@@ -82,6 +84,14 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/asignacion-clientes"
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <ClientAssignment />
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="/vendedor" element={<Navigate to="/vendedor/facturacion" replace />} />
         <Route path="/vendedor/facturacion" element={<InvoiceForm />} />
@@ -91,6 +101,7 @@ export default function App() {
         <Route path="/vendedor/presupuestos/:id/editar" element={<QuoteForm />} />
         <Route path="/vendedor/clientes" element={<Clients />} />
         <Route path="/vendedor/cuenta-corriente" element={<SellerAccount mode="mine" />} />
+        <Route path="/vendedor/mis-clientes" element={<MyClients />} />
 
         <Route path="/facturas/:id" element={<InvoicesList />} />
       </Route>

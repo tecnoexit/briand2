@@ -87,4 +87,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/quotes/{quote}', [QuoteController::class, 'update']);
         Route::delete('/quotes/{quote}', [QuoteController::class, 'destroy']);
     });
+
+    // --- Asignación de clientes a vendedores/distribuidores (solo admin) ---
+    Route::middleware('role:admin')->group(function () {
+        Route::put('/clients/{client}/seller', [ClientController::class, 'assignSeller']);
+    });
 });

@@ -7,6 +7,7 @@ import {
   LogOut,
   PackagePlus,
   Receipt,
+  UserCheck,
   Users,
   Wallet,
 } from 'lucide-react'
@@ -31,8 +32,11 @@ function navItems(user) {
     { to: `${base}/cuenta-corriente`, label: 'Cuenta Corriente', icon: Wallet },
   )
   if (isAdmin(user)) {
+    items.push({ to: '/admin/asignacion-clientes', label: 'Asignación de clientes', icon: UserCheck })
     items.push({ to: '/admin/monedas', label: 'Monedas', icon: Coins })
     items.push({ to: '/admin/usuarios', label: 'Usuarios', icon: Users })
+  } else {
+    items.push({ to: `${base}/mis-clientes`, label: 'Mis clientes', icon: UserCheck })
   }
   return items
 }
