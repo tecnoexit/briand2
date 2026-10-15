@@ -88,6 +88,7 @@ function InvoiceDetail({ id, onClose }) {
                 />
                 <div>
                   <p className="text-lg font-bold leading-none text-slate-800">Ferretería De2</p>
+                  <p className="text-[10px] text-slate-500">Av. Gral. Juan Facundo Quiroga 1143</p>
                   <p className="text-[10px] uppercase tracking-widest text-slate-400">Factura</p>
                 </div>
               </div>

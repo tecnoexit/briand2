@@ -4,7 +4,11 @@ import { formatMoney } from '../lib/format'
 import { paymentLabel } from '../lib/roles'
 
 const DARK = '#2c3e50'
-const BRAND = { name: 'Ferretería De2', email: 'ferreteriad2@gmail.com' }
+const BRAND = {
+  name: 'Ferretería De2',
+  email: 'ferreteriad2@gmail.com',
+  address: 'Av. Gral. Juan Facundo Quiroga 1143',
+}
 
 function HeaderCell({ children, width, align = 'left' }) {
   return (
@@ -97,6 +101,8 @@ export default function PrintableDoc({ doc, docType = 'factura', sellerName = ''
                   <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#34495e', marginBottom: '4px' }}>
                     {BRAND.name}
                   </div>
+                  {BRAND.address}
+                  <br />
                   Email: {BRAND.email}
                 </td>
                 <td style={{ width: '25%', textAlign: 'right', verticalAlign: 'top', fontSize: '14px', fontWeight: 'bold' }}>
