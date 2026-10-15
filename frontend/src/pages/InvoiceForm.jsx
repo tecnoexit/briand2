@@ -37,6 +37,7 @@ export default function InvoiceForm() {
   const [dateLabel, setDateLabel] = useState(() => new Date().toLocaleDateString('es-AR'))
   const [sellerName, setSellerName] = useState(() => user?.name || '—')
   const [sellerId, setSellerId] = useState(null)
+  const [users, setUsers] = useState([])
 
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -45,10 +46,22 @@ export default function InvoiceForm() {
 
   const isDistribuidor = client?.type === 'distribuidor'
   const symbol = '$'
+  const sellers = useMemo(
+    () => users.filter((u) => u.role === 'vendedor' || u.role === 'admin'),
+    [users],
+  )
 
   useEffect(() => {
     api.get('/currencies').then(({ data }) => setCurrencies(data)).catch(() => {})
   }, [])
+
+  useEffect(() => {
+    if (!admin || editId || quoteId) return
+    api
+      .get('/users')
+      .then(({ data }) => setUsers(Array.isArray(data) ? data : []))
+      .catch(() => {})
+  }, [admin, editId, quoteId])
 
   useEffect(() => {
     if (!editId) return
@@ -298,11 +311,30 @@ export default function InvoiceForm() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-bold text-slate-600">Vendedor</label>
-            <input
-              value={sellerName}
-              readOnly
-              className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600"
-            />
+            {admin && !editId && !quoteId ? (
+              <select
+                value={sellerId ?? user?.id ?? ''}
+                onChange={(e) => {
+                  const id = e.target.value ? Number(e.target.value) : null
+                  setSellerId(id)
+                  const u = sellers.find((x) => x.id === id)
+                  setSellerName(u?.name || user?.name || '—')
+                }}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              >
+                {sellers.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                value={sellerName}
+                readOnly
+                className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-600"
+              />
+            )}
           </div>
           <div>
             <label className="mb-1 block text-xs font-bold text-slate-600">Fecha</label>
