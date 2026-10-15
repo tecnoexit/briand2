@@ -13,6 +13,8 @@ import Users from './pages/Users'
 import Clients from './pages/Clients'
 import ClientCatalog from './pages/ClientCatalog'
 import Products from './pages/Products'
+import CuentaCorriente from './pages/CuentaCorriente'
+import SellerAccount from './pages/SellerAccount'
 
 function HomeRedirect() {
   const { user, loading } = useAuth()
@@ -64,6 +66,22 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/cuenta-corriente"
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <CuentaCorriente />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/cuenta-corriente/:sellerId"
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <SellerAccount mode="admin" />
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="/vendedor" element={<Navigate to="/vendedor/facturacion" replace />} />
         <Route path="/vendedor/facturacion" element={<InvoiceForm />} />
@@ -72,6 +90,7 @@ export default function App() {
         <Route path="/vendedor/presupuestos/nuevo" element={<QuoteForm />} />
         <Route path="/vendedor/presupuestos/:id/editar" element={<QuoteForm />} />
         <Route path="/vendedor/clientes" element={<Clients />} />
+        <Route path="/vendedor/cuenta-corriente" element={<SellerAccount mode="mine" />} />
 
         <Route path="/facturas/:id" element={<InvoicesList />} />
       </Route>

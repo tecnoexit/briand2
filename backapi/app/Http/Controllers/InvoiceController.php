@@ -315,7 +315,7 @@ class InvoiceController extends Controller
             return response()->json(['message' => 'No autorizado'], 403);
         }
 
-        return response()->json($invoice->load(['items', 'seller']));
+        return response()->json($invoice->load(['items', 'seller', 'voidRequestedBy', 'voidAuthorizedBy']));
     }
 
     /**
@@ -329,5 +329,51 @@ class InvoiceController extends Controller
 
         $invoice->delete();
         return response()->json(['message' => 'Factura eliminada correctamente']);
+    }
+
+    /**
+     * Solicitar la anulación de una boleta (el vendedor de la boleta o un admin).
+     * El motivo es obligatorio. Queda en estado "pendiente" hasta la autorización.
+     */
+    public function requestVoid(Request $request, Invoice $invoice)
+    {
+        $user = $request->user();
+        if ($user->role !== 'admin' && $invoice->seller_id !== $user->id) {
+            return response()->json(['message' => 'No autorizado'], 403);
+        }
+
+        $request->validate([
+            'void_reason' => 'required|string|max:1000',
+        ]);
+
+        $invoice->update([
+            'void_status'        => 'pendiente',
+            'void_reason'        => $request->void_reason,
+            'void_requested_by'  => $user->id,
+            'void_requested_at'  => now(),
+            'void_authorized_by' => null,
+            'void_authorized_at' => null,
+        ]);
+
+        return response()->json($invoice->load(['seller', 'voidRequestedBy']));
+    }
+
+    /**
+     * Autorizar una anulación (solo admin). La boleta deja de computar
+     * en el saldo, conservando su historial.
+     */
+    public function authorizeVoid(Request $request, Invoice $invoice)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Solo admin puede autorizar anulaciones'], 403);
+        }
+
+        $invoice->update([
+            'void_status'        => 'anulada',
+            'void_authorized_by' => $request->user()->id,
+            'void_authorized_at' => now(),
+        ]);
+
+        return response()->json($invoice->load(['seller', 'voidRequestedBy', 'voidAuthorizedBy']));
     }
 }

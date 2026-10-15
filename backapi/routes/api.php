@@ -7,6 +7,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\QuoteController;
+use App\Http\Controllers\AccountController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -57,6 +58,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
         Route::put('/invoices/{invoice}', [InvoiceController::class, 'update']);
         Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy']);
+        Route::post('/invoices/{invoice}/anular', [InvoiceController::class, 'requestVoid']);
+
+        // Cuenta corriente del vendedor autenticado
+        Route::get('/cuenta-corriente/mia', [AccountController::class, 'mine']);
+    });
+
+    // --- Cuenta corriente por vendedor (solo admin) ---
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/cuenta-corriente', [AccountController::class, 'index']);
+        Route::get('/cuenta-corriente/seller/{seller}', [AccountController::class, 'show']);
+        Route::post('/cuenta-corriente/pagos', [AccountController::class, 'storePayment']);
+        Route::put('/cuenta-corriente/seller/{seller}/saldo-inicial', [AccountController::class, 'updateOpeningBalance']);
+        Route::post('/invoices/{invoice}/autorizar-anulacion', [InvoiceController::class, 'authorizeVoid']);
     });
 
     // --- Clientes y Presupuestos (Admin, Vendedor y Depósito) ---

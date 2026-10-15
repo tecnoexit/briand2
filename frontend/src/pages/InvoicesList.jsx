@@ -5,7 +5,7 @@ import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { isAdmin } from '../lib/roles'
 import { formatDate, formatMoney } from '../lib/format'
-import { PAYMENT_METHODS, paymentLabel } from '../lib/roles'
+import { PAYMENT_METHODS, paymentLabel, voidStatusBadge, voidStatusLabel } from '../lib/roles'
 import ClientTypeBadge from '../components/ClientTypeBadge'
 
 function SummaryCard({ label, value }) {
@@ -118,6 +118,14 @@ function InvoiceDetail({ id, onClose }) {
                 )}
                 <p className="mt-2 text-slate-400">Pago</p>
                 <p className="text-slate-700">{paymentLabel(invoice.payment_method)}</p>
+                <p className="mt-2 text-slate-400">Estado</p>
+                <span
+                  className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${voidStatusBadge(
+                    invoice.void_status,
+                  )}`}
+                >
+                  {voidStatusLabel(invoice.void_status)}
+                </span>
               </div>
             </div>
 

@@ -23,6 +23,12 @@ class Invoice extends Model
         'total',
         'notes',
         'modification_reason',
+        'void_status',
+        'void_reason',
+        'void_requested_by',
+        'void_requested_at',
+        'void_authorized_by',
+        'void_authorized_at',
     ];
 
     protected $casts = [
@@ -30,6 +36,8 @@ class Invoice extends Model
         'tax_rate' => 'decimal:2',
         'tax_amount' => 'decimal:2',
         'total' => 'decimal:2',
+        'void_requested_at' => 'datetime',
+        'void_authorized_at' => 'datetime',
     ];
 
     public function client()
@@ -45,5 +53,15 @@ class Invoice extends Model
     public function items()
     {
         return $this->hasMany(InvoiceItem::class);
+    }
+
+    public function voidRequestedBy()
+    {
+        return $this->belongsTo(User::class, 'void_requested_by');
+    }
+
+    public function voidAuthorizedBy()
+    {
+        return $this->belongsTo(User::class, 'void_authorized_by');
     }
 }

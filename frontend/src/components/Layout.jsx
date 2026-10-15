@@ -8,6 +8,7 @@ import {
   PackagePlus,
   Receipt,
   Users,
+  Wallet,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { isAdmin } from '../lib/roles'
@@ -27,6 +28,7 @@ function navItems(user) {
     { to: `${base}/facturas`, label: 'Facturas', icon: Receipt },
     { to: `${base}/presupuestos`, label: 'Presupuestos', icon: FileText },
     { to: `${base}/clientes`, label: 'Clientes', icon: Contact },
+    { to: `${base}/cuenta-corriente`, label: 'Cuenta Corriente', icon: Wallet },
   )
   if (isAdmin(user)) {
     items.push({ to: '/admin/monedas', label: 'Monedas', icon: Coins })

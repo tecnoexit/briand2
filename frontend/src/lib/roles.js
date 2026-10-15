@@ -47,6 +47,31 @@ export function isVendedor(user) {
   return user?.role === 'vendedor'
 }
 
+export const ACCOUNT_PAYMENT_METHODS = [
+  { value: 'efectivo', label: 'Efectivo' },
+  { value: 'transferencia', label: 'Transferencia' },
+  { value: 'cheque', label: 'Cheque' },
+  { value: 'otro', label: 'Otro' },
+]
+
+export function accountPaymentLabel(value) {
+  return ACCOUNT_PAYMENT_METHODS.find((m) => m.value === value)?.label ?? value ?? ''
+}
+
+export const VOID_STATUS = {
+  vigente: { label: 'Vigente', badge: 'bg-green-100 text-green-700' },
+  pendiente: { label: 'Anulación pendiente', badge: 'bg-amber-100 text-amber-700' },
+  anulada: { label: 'Anulada', badge: 'bg-red-100 text-red-700' },
+}
+
+export function voidStatusLabel(value) {
+  return VOID_STATUS[value]?.label ?? 'Vigente'
+}
+
+export function voidStatusBadge(value) {
+  return VOID_STATUS[value]?.badge ?? VOID_STATUS.vigente.badge
+}
+
 export function homePathFor(user) {
   switch (user?.role) {
     case 'admin':
