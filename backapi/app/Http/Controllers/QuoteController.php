@@ -72,6 +72,7 @@ class QuoteController extends Controller
             'estado'                => 'nullable|in:pendiente,aceptado,rechazado,vencido',
             'valid_until'           => 'nullable|date',
             'notes'                 => 'nullable|string',
+            'seller_id'             => 'nullable|integer|exists:users,id',
             'items'                 => 'required|array|min:1',
             'items.*.product_id'    => 'nullable|integer|exists:products,id',
             'items.*.product_name'  => 'required|string|max:255',
@@ -95,13 +96,19 @@ class QuoteController extends Controller
             $taxAmount = ($subtotal * $taxRate) / 100;
             $total = $subtotal + $taxAmount;
 
+            // El vendedor: un admin puede asignar un vendedor específico.
+            $sellerId = $request->user()->id;
+            if ($request->user()->role === 'admin' && $request->filled('seller_id')) {
+                $sellerId = (int) $request->seller_id;
+            }
+
             $quote = Quote::create([
                 'client_id'      => $request->client_id,
                 'client_name'    => $request->client_name,
                 'client_phone'   => $request->client_phone,
                 'client_email'   => $request->client_email,
                 'client_type'    => $clientType,
-                'seller_id'      => $request->user()->id,
+                'seller_id'      => $sellerId,
                 'payment_method' => $request->input('payment_method', 'efectivo'),
                 'subtotal'       => $subtotal,
                 'tax_rate'       => $taxRate,
@@ -159,6 +166,7 @@ class QuoteController extends Controller
             'estado'                => 'nullable|in:pendiente,aceptado,rechazado,vencido',
             'valid_until'           => 'nullable|date',
             'notes'                 => 'nullable|string',
+            'seller_id'             => 'nullable|integer|exists:users,id',
             'items'                 => 'nullable|array|min:1',
             'items.*.product_id'    => 'nullable|integer|exists:products,id',
             'items.*.product_name'  => 'required_with:items|string|max:255',
@@ -180,6 +188,11 @@ class QuoteController extends Controller
                 'payment_method', 'estado', 'valid_until', 'notes',
             ]));
             $quote->client_type = $clientType;
+
+            // Un admin puede reasignar el vendedor del presupuesto.
+            if ($request->user()->role === 'admin' && $request->filled('seller_id')) {
+                $quote->seller_id = (int) $request->seller_id;
+            }
 
             // Si vienen items, los reemplazamos y recalculamos totales.
             if ($request->filled('items')) {
