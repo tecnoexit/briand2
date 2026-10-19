@@ -119,6 +119,9 @@ export default function QuoteForm() {
               product_code: it.product_code,
               quantity: it.quantity,
               unit_price: price,
+              base_unit_price:
+                it.base_unit_price != null ? Number(it.base_unit_price) : price,
+              price_adjust_percent: Number(it.price_adjust_percent ?? 0),
               notes: it.notes || '',
             }
           }),
@@ -164,6 +167,8 @@ export default function QuoteForm() {
       product_code: it.product_code || null,
       quantity: Number(it.quantity),
       unit_price: Number(it.unit_price),
+      base_unit_price: Number(it.base_unit_price ?? it.unit_price ?? 0),
+      price_adjust_percent: Number(it.price_adjust_percent ?? 0),
       notes: it.notes || null,
     })),
   })

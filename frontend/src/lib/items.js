@@ -10,6 +10,8 @@ export function addProductToItems(items, product, isDistribuidor, currencies) {
     product_code: product.code,
     quantity: 1,
     unit_price: price,
+    base_unit_price: price,
+    price_adjust_percent: 0,
     notes: '',
   }
   if (existing) {
@@ -28,6 +30,8 @@ export function addManualItem(items) {
       product_code: '',
       quantity: 1,
       unit_price: 0,
+      base_unit_price: 0,
+      price_adjust_percent: 0,
       notes: '',
     },
     ...items,

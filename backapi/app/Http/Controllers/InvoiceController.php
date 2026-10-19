@@ -122,6 +122,8 @@ class InvoiceController extends Controller
             'items.*.product_code' => 'nullable|string|max:255',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'items.*.base_unit_price' => 'nullable|numeric|min:0',
+            'items.*.price_adjust_percent' => 'nullable|numeric',
             'items.*.notes' => 'nullable|string',
         ]);
 
@@ -180,7 +182,8 @@ class InvoiceController extends Controller
             // Calcular totales
             $subtotal = 0;
             foreach ($request->items as $item) {
-                $subtotal += $item['quantity'] * $item['unit_price'];
+                [, , $unitPrice] = $this->itemPrices($item);
+                $subtotal += $item['quantity'] * $unitPrice;
             }
             $taxAmount = ($subtotal * $taxRate) / 100;
             $total = $subtotal + $taxAmount;
@@ -209,15 +212,17 @@ class InvoiceController extends Controller
             ]);
 
             foreach ($request->items as $item) {
-                $totalPrice = $item['quantity'] * $item['unit_price'];
+                [$basePrice, $adjustPercent, $unitPrice] = $this->itemPrices($item);
                 InvoiceItem::create([
                     'invoice_id' => $invoice->id,
                     'product_id' => $item['product_id'] ?? null,
                     'product_name' => $item['product_name'],
                     'product_code' => $item['product_code'] ?? null,
                     'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'],
-                    'total_price' => $totalPrice,
+                    'unit_price' => $unitPrice,
+                    'base_unit_price' => $basePrice,
+                    'price_adjust_percent' => $adjustPercent,
+                    'total_price' => $item['quantity'] * $unitPrice,
                     'notes' => $item['notes'] ?? null,
                 ]);
             }
@@ -251,6 +256,8 @@ class InvoiceController extends Controller
             'items.*.product_code' => 'nullable|string|max:255',
             'items.*.quantity'     => 'required|integer|min:1',
             'items.*.unit_price'   => 'required|numeric|min:0',
+            'items.*.base_unit_price' => 'nullable|numeric|min:0',
+            'items.*.price_adjust_percent' => 'nullable|numeric',
             'items.*.notes'        => 'nullable|string',
         ]);
 
@@ -268,7 +275,8 @@ class InvoiceController extends Controller
 
             $subtotal = 0;
             foreach ($request->items as $item) {
-                $subtotal += $item['quantity'] * $item['unit_price'];
+                [, , $unitPrice] = $this->itemPrices($item);
+                $subtotal += $item['quantity'] * $unitPrice;
             }
             $taxAmount = ($subtotal * $taxRate) / 100;
 
@@ -289,14 +297,17 @@ class InvoiceController extends Controller
 
             $invoice->items()->delete();
             foreach ($request->items as $item) {
+                [$basePrice, $adjustPercent, $unitPrice] = $this->itemPrices($item);
                 InvoiceItem::create([
                     'invoice_id'   => $invoice->id,
                     'product_id'   => $item['product_id'] ?? null,
                     'product_name' => $item['product_name'],
                     'product_code' => $item['product_code'] ?? null,
                     'quantity'     => $item['quantity'],
-                    'unit_price'   => $item['unit_price'],
-                    'total_price'  => $item['quantity'] * $item['unit_price'],
+                    'unit_price'   => $unitPrice,
+                    'base_unit_price' => $basePrice,
+                    'price_adjust_percent' => $adjustPercent,
+                    'total_price'  => $item['quantity'] * $unitPrice,
                     'notes'        => $item['notes'] ?? null,
                 ]);
             }
@@ -375,5 +386,22 @@ class InvoiceController extends Controller
         ]);
 
         return response()->json($invoice->load(['seller', 'voidRequestedBy', 'voidAuthorizedBy']));
+    }
+
+    /**
+     * Calcula el precio final de un ítem aplicando el ajuste porcentual manual.
+     * Devuelve [base_unit_price, price_adjust_percent, unit_price].
+     */
+    private function itemPrices(array $item): array
+    {
+        $base = $item['base_unit_price'] ?? null;
+        if ($base === null || $base === '') {
+            $base = (float) ($item['unit_price'] ?? 0);
+        }
+        $base  = (float) $base;
+        $pct   = (float) ($item['price_adjust_percent'] ?? 0);
+        $unit  = round($base * (1 + $pct / 100), 2);
+
+        return [$base, $pct, $unit];
     }
 }

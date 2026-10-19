@@ -1,6 +1,18 @@
 import { Plus, Trash2 } from 'lucide-react'
-import { formatMoney } from '../lib/format'
+import { formatMoney, round2 } from '../lib/format'
 import { addManualItem } from '../lib/items'
+
+function applyPercent(item, raw) {
+  const base = Number(item.base_unit_price ?? item.unit_price ?? 0)
+  const pct = raw === '' ? 0 : Number(raw)
+  const unit_price = round2(base * (1 + pct / 100))
+  return { ...item, base_unit_price: base, price_adjust_percent: pct, unit_price }
+}
+
+function applyUnitPrice(item, raw) {
+  const unit_price = raw === '' ? 0 : Number(raw)
+  return { ...item, base_unit_price: unit_price, price_adjust_percent: 0, unit_price }
+}
 
 export default function ItemsTable({ items, onChange, symbol = '$', showPrices = true }) {
   const updateItem = (key, field, value) =>
@@ -10,7 +22,7 @@ export default function ItemsTable({ items, onChange, symbol = '$', showPrices =
 
   const addManual = () => onChange(addManualItem(items))
 
-  const colSpan = showPrices ? 6 : 4
+  const colSpan = showPrices ? 7 : 4
 
   return (
     <div>
@@ -21,6 +33,7 @@ export default function ItemsTable({ items, onChange, symbol = '$', showPrices =
               <th className="py-2 pr-2">Código</th>
               <th className="w-20 py-2 text-center">Cant.</th>
               <th className="py-2 pr-2">Descripción</th>
+              {showPrices && <th className="w-20 py-2 text-center">Ajuste %</th>}
               {showPrices && <th className="w-28 py-2 text-right">P. Unit.</th>}
               {showPrices && <th className="w-28 py-2 text-right">P. Total</th>}
               <th className="w-8" />
@@ -69,13 +82,37 @@ export default function ItemsTable({ items, onChange, symbol = '$', showPrices =
                     />
                   </td>
                   {showPrices && (
+                    <td className="py-2 text-center">
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={it.price_adjust_percent ?? 0}
+                        title="Ajuste porcentual sobre el precio. Negativo = descuento, positivo = recargo."
+                        onChange={(e) =>
+                          onChange(
+                            items.map((x) =>
+                              x.key === it.key ? applyPercent(x, e.target.value) : x,
+                            ),
+                          )
+                        }
+                        className="w-20 rounded border border-slate-200 px-2 py-1 text-center text-sm"
+                      />
+                    </td>
+                  )}
+                  {showPrices && (
                     <td className="py-2 text-right">
                       <input
                         type="number"
                         min={0}
                         step="0.01"
                         value={it.unit_price}
-                        onChange={(e) => updateItem(it.key, 'unit_price', Number(e.target.value))}
+                        onChange={(e) =>
+                          onChange(
+                            items.map((x) =>
+                              x.key === it.key ? applyUnitPrice(x, e.target.value) : x,
+                            ),
+                          )
+                        }
                         className="w-24 rounded border border-slate-200 px-2 py-1 text-right text-sm"
                       />
                     </td>

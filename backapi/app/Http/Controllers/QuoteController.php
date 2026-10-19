@@ -79,6 +79,8 @@ class QuoteController extends Controller
             'items.*.product_code'  => 'nullable|string|max:255',
             'items.*.quantity'      => 'required|integer|min:1',
             'items.*.unit_price'    => 'nullable|numeric|min:0',
+            'items.*.base_unit_price' => 'nullable|numeric|min:0',
+            'items.*.price_adjust_percent' => 'nullable|numeric',
             'items.*.notes'         => 'nullable|string',
         ]);
 
@@ -90,7 +92,7 @@ class QuoteController extends Controller
 
             $subtotal = 0;
             foreach ($request->items as $item) {
-                $unitPrice = $isDeposito ? 0 : ($item['unit_price'] ?? 0);
+                $unitPrice = $isDeposito ? 0 : $this->itemPrices($item)[2];
                 $subtotal += $item['quantity'] * $unitPrice;
             }
             $taxAmount = ($subtotal * $taxRate) / 100;
@@ -173,6 +175,8 @@ class QuoteController extends Controller
             'items.*.product_code'  => 'nullable|string|max:255',
             'items.*.quantity'      => 'required_with:items|integer|min:1',
             'items.*.unit_price'    => 'nullable|numeric|min:0',
+            'items.*.base_unit_price' => 'nullable|numeric|min:0',
+            'items.*.price_adjust_percent' => 'nullable|numeric',
             'items.*.notes'         => 'nullable|string',
         ]);
 
@@ -200,7 +204,7 @@ class QuoteController extends Controller
 
                 $subtotal = 0;
                 foreach ($request->items as $item) {
-                    $unitPrice = $isDeposito ? 0 : ($item['unit_price'] ?? 0);
+                    $unitPrice = $isDeposito ? 0 : $this->itemPrices($item)[2];
                     $subtotal += $item['quantity'] * $unitPrice;
                 }
                 $taxAmount = ($subtotal * $taxRate) / 100;
@@ -271,8 +275,10 @@ class QuoteController extends Controller
     private function syncItems(Quote $quote, array $items, bool $zeroPrices = false): void
     {
         foreach ($items as $item) {
-            $unitPrice  = $zeroPrices ? 0 : ($item['unit_price'] ?? 0);
-            $totalPrice = $item['quantity'] * $unitPrice;
+            [$basePrice, $adjustPercent, $unitPrice] = $zeroPrices
+                ? [0.0, 0.0, 0.0]
+                : $this->itemPrices($item);
+
             QuoteItem::create([
                 'quote_id'     => $quote->id,
                 'product_id'   => $item['product_id'] ?? null,
@@ -280,9 +286,28 @@ class QuoteController extends Controller
                 'product_code' => $item['product_code'] ?? null,
                 'quantity'     => $item['quantity'],
                 'unit_price'   => $unitPrice,
-                'total_price'  => $totalPrice,
+                'base_unit_price' => $basePrice,
+                'price_adjust_percent' => $adjustPercent,
+                'total_price'  => $item['quantity'] * $unitPrice,
                 'notes'        => $item['notes'] ?? null,
             ]);
         }
+    }
+
+    /**
+     * Calcula el precio final de un ítem aplicando el ajuste porcentual manual.
+     * Devuelve [base_unit_price, price_adjust_percent, unit_price].
+     */
+    private function itemPrices(array $item): array
+    {
+        $base = $item['base_unit_price'] ?? null;
+        if ($base === null || $base === '') {
+            $base = (float) ($item['unit_price'] ?? 0);
+        }
+        $base  = (float) $base;
+        $pct   = (float) ($item['price_adjust_percent'] ?? 0);
+        $unit  = round($base * (1 + $pct / 100), 2);
+
+        return [$base, $pct, $unit];
     }
 }

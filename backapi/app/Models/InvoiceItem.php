@@ -16,13 +16,17 @@ class InvoiceItem extends Model
         'product_code',
         'quantity',
         'unit_price',
+        'base_unit_price',
+        'price_adjust_percent',
         'total_price',
         'notes',
     ];
 
     protected $casts = [
-        'unit_price' => 'decimal:2',
-        'total_price' => 'decimal:2',
+        'unit_price'          => 'decimal:2',
+        'base_unit_price'     => 'decimal:2',
+        'price_adjust_percent' => 'float',
+        'total_price'         => 'decimal:2',
     ];
 
     public function invoice()
