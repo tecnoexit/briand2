@@ -1,8 +1,10 @@
-import { round2, unitPriceFor } from './format'
+import { round2, costoBase, defaultAdjustPercent } from './format'
 import { productVisibility } from '../components/ItemsEditor'
 
 export function addProductToItems(items, product, isDistribuidor, currencies) {
-  const price = round2(unitPriceFor(product, isDistribuidor, currencies))
+  const base = round2(costoBase(product, currencies))
+  const adjust = defaultAdjustPercent(product, isDistribuidor)
+  const price = round2(base * (1 + adjust / 100))
   const existing = items.find((it) => it.product_id === product.id)
   const newItem = {
     key: `p-${product.id}-${Date.now()}`,
@@ -11,8 +13,8 @@ export function addProductToItems(items, product, isDistribuidor, currencies) {
     product_code: product.code,
     quantity: 1,
     unit_price: price,
-    base_unit_price: price,
-    price_adjust_percent: 0,
+    base_unit_price: base,
+    price_adjust_percent: adjust,
     visibility: productVisibility(product),
     distribuidor_discount_enabled: !!product.distribuidor_discount_enabled,
     distribuidor_discount_percent: Number(product.distribuidor_discount_percent ?? 0),

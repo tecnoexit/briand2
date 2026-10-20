@@ -4,7 +4,7 @@ import { FileText, Loader2, Save } from 'lucide-react'
 import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { PAYMENT_METHODS, QUOTE_ESTADOS, isAdmin } from '../lib/roles'
-import { formatMoney, round2, unitPriceFor } from '../lib/format'
+import { formatMoney, round2, costoBase, defaultAdjustPercent } from '../lib/format'
 import { addProductToItems } from '../lib/items'
 import ClientSection from '../components/ClientSection'
 import ProductsPanel from '../components/ProductsPanel'
@@ -114,9 +114,13 @@ export default function QuoteForm() {
         setItems(
           (data.items || []).map((it, idx) => {
             const product = it.product_id ? map[it.product_id] : null
-            const price = product
-              ? round2(unitPriceFor(product, isDist, currencies))
-              : Number(it.unit_price || 0)
+            const base = product
+              ? round2(costoBase(product, currencies))
+              : Number(it.base_unit_price ?? it.unit_price ?? 0)
+            const adjust = product
+              ? defaultAdjustPercent(product, isDist)
+              : Number(it.price_adjust_percent ?? 0)
+            const price = round2(base * (1 + adjust / 100))
             return {
               key: `it-${it.id ?? idx}`,
               product_id: it.product_id,
@@ -124,9 +128,8 @@ export default function QuoteForm() {
               product_code: it.product_code,
               quantity: it.quantity,
               unit_price: price,
-              base_unit_price:
-                it.base_unit_price != null ? Number(it.base_unit_price) : price,
-              price_adjust_percent: Number(it.price_adjust_percent ?? 0),
+              base_unit_price: base,
+              price_adjust_percent: adjust,
               visibility: product ? productVisibility(product) : null,
               distribuidor_discount_enabled: !!product?.distribuidor_discount_enabled,
               distribuidor_discount_percent: Number(product?.distribuidor_discount_percent ?? 0),
@@ -153,12 +156,13 @@ export default function QuoteForm() {
       prevItems.map((it) => {
         const p = it.product_id ? productsById.current[it.product_id] : null
         if (!p) return it
-        const base = round2(unitPriceFor(p, isDistribuidor, currencies))
-        const pct = Number(it.price_adjust_percent ?? 0)
+        const base = round2(costoBase(p, currencies))
+        const adjust = defaultAdjustPercent(p, isDistribuidor)
         return {
           ...it,
           base_unit_price: base,
-          unit_price: round2(base * (1 + pct / 100)),
+          price_adjust_percent: adjust,
+          unit_price: round2(base * (1 + adjust / 100)),
         }
       }),
     )

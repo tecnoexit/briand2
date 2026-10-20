@@ -120,7 +120,7 @@ export default function ItemsTable({ items, onChange, symbol = '$', showPrices =
                         type="number"
                         step="0.5"
                         value={it.price_adjust_percent ?? 0}
-                        title="Ajuste porcentual sobre el precio. Negativo = descuento, positivo = recargo."
+                        title="Ajuste sobre el costo calculado (%). Negativo = debajo del costo, positivo = recargo."
                         onChange={(e) =>
                           onChange(
                             items.map((x) =>

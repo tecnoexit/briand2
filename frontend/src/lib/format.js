@@ -36,6 +36,25 @@ export function unitPriceFor(product, isDistribuidor, currencies = []) {
   return priceRegular(product, currencies)
 }
 
+export function costoCalculado(product) {
+  const base = num(product?.precio_lista ?? product?.price)
+  const impuesto = num(product?.impuesto)
+  return base * (1 + impuesto / 100)
+}
+
+export function costoBase(product, currencies = []) {
+  const currency = findCurrency(currencies, product?.currency_id)
+  const rate = num(currency?.rate ?? 1)
+  return costoCalculado(product) * rate
+}
+
+export function defaultAdjustPercent(product, isDistribuidor) {
+  if (isDistribuidor && product?.distribuidor_discount_enabled) {
+    return num(product?.distribuidor_discount_percent)
+  }
+  return num(product?.profit_margin)
+}
+
 export function round2(value) {
   return Math.round(num(value) * 100) / 100
 }
