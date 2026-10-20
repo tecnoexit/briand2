@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FileText, Loader2, Save } from 'lucide-react'
 import api from '../api/client'
@@ -52,6 +52,9 @@ export default function InvoiceForm() {
     [users],
   )
 
+  const productsById = useRef({})
+  const prevClientType = useRef(null)
+
   useEffect(() => {
     api.get('/currencies').then(({ data }) => setCurrencies(data)).catch(() => {})
   }, [])
@@ -84,6 +87,7 @@ export default function InvoiceForm() {
           }),
         )
         if (!active) return
+        productsById.current = { ...productsById.current, ...map }
         setClient({
           id: data.client_id,
           name: data.client_name,
@@ -161,6 +165,7 @@ export default function InvoiceForm() {
           }),
         )
         if (!active) return
+        productsById.current = { ...productsById.current, ...map }
         setItems(
           (data.items || []).map((it, idx) => {
             const product = it.product_id ? map[it.product_id] : null
@@ -193,6 +198,26 @@ export default function InvoiceForm() {
     }
   }, [editId, quoteId, currencies])
 
+  useEffect(() => {
+    const clientType = client?.type || null
+    const prev = prevClientType.current
+    prevClientType.current = clientType
+    if (!prev || prev === clientType || currencies.length === 0) return
+    setItems((prevItems) =>
+      prevItems.map((it) => {
+        const p = it.product_id ? productsById.current[it.product_id] : null
+        if (!p) return it
+        const base = round2(unitPriceFor(p, isDistribuidor, currencies))
+        const pct = Number(it.price_adjust_percent ?? 0)
+        return {
+          ...it,
+          base_unit_price: base,
+          unit_price: round2(base * (1 + pct / 100)),
+        }
+      }),
+    )
+  }, [isDistribuidor, currencies])
+
   const subtotal = useMemo(
     () => items.reduce((acc, it) => acc + Number(it.quantity || 0) * Number(it.unit_price || 0), 0),
     [items],
@@ -200,7 +225,10 @@ export default function InvoiceForm() {
   const taxAmount = useMemo(() => (subtotal * Number(taxRate || 0)) / 100, [subtotal, taxRate])
   const total = subtotal + taxAmount
 
-  const addProduct = (p) => setItems(addProductToItems(items, p, isDistribuidor, currencies))
+  const addProduct = (p) => {
+    productsById.current = { ...productsById.current, [p.id]: p }
+    setItems(addProductToItems(items, p, isDistribuidor, currencies))
+  }
 
   const validate = () => {
     if (!client?.name?.trim()) return 'Seleccioná o creá un cliente.'
