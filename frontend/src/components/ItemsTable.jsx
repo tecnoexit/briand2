@@ -15,7 +15,7 @@ function applyUnitPrice(item, raw) {
 }
 
 function visibilityCellClass(v) {
-  if (v === 'distribuidor_only') return 'bg-blue-50'
+  if (v === 'distribuidor_only') return 'bg-green-50'
   if (v === 'regular_only') return 'bg-amber-50'
   return ''
 }
@@ -25,7 +25,7 @@ function visibilityBadge(v) {
     return (
       <span
         title="Producto exclusivo para clientes distribuidores"
-        className="mt-1 inline-block rounded bg-blue-600 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white"
+        className="mt-1 inline-block rounded bg-green-600 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white"
       >
         Solo dist.
       </span>
