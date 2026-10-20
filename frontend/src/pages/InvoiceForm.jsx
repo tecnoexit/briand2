@@ -9,6 +9,7 @@ import { addProductToItems } from '../lib/items'
 import ClientSection from '../components/ClientSection'
 import ProductsPanel from '../components/ProductsPanel'
 import ItemsTable from '../components/ItemsTable'
+import { productVisibility } from '../components/ItemsEditor'
 
 function defaultValidUntil() {
   const d = new Date()
@@ -65,10 +66,24 @@ export default function InvoiceForm() {
 
   useEffect(() => {
     if (!editId) return
+    let active = true
     setLoading(true)
     api
       .get(`/invoices/${editId}`)
-      .then(({ data }) => {
+      .then(async ({ data }) => {
+        if (!active) return
+        const ids = [...new Set((data.items || []).map((it) => it.product_id).filter(Boolean))]
+        const map = {}
+        await Promise.all(
+          ids.map(async (pid) => {
+            try {
+              map[pid] = (await api.get(`/products/${pid}`)).data
+            } catch {
+              // producto inexistente
+            }
+          }),
+        )
+        if (!active) return
         setClient({
           id: data.client_id,
           name: data.client_name,
@@ -83,22 +98,31 @@ export default function InvoiceForm() {
         if (data.created_at) setDateLabel(new Date(data.created_at).toLocaleDateString('es-AR'))
         if (data.seller?.name) setSellerName(data.seller.name)
         setItems(
-          (data.items || []).map((it, idx) => ({
-            key: `it-${it.id ?? idx}`,
-            product_id: it.product_id,
-            product_name: it.product_name,
-            product_code: it.product_code,
-            quantity: it.quantity,
-            unit_price: Number(it.unit_price),
-            base_unit_price:
-              it.base_unit_price != null ? Number(it.base_unit_price) : Number(it.unit_price),
-            price_adjust_percent: Number(it.price_adjust_percent ?? 0),
-            notes: it.notes || '',
-          })),
+          (data.items || []).map((it, idx) => {
+            const product = it.product_id ? map[it.product_id] : null
+            return {
+              key: `it-${it.id ?? idx}`,
+              product_id: it.product_id,
+              product_name: it.product_name,
+              product_code: it.product_code,
+              quantity: it.quantity,
+              unit_price: Number(it.unit_price),
+              base_unit_price:
+                it.base_unit_price != null ? Number(it.base_unit_price) : Number(it.unit_price),
+              price_adjust_percent: Number(it.price_adjust_percent ?? 0),
+              visibility: product ? productVisibility(product) : null,
+              notes: it.notes || '',
+            }
+          }),
         )
       })
       .catch(() => setError('No se pudo cargar la factura'))
-      .finally(() => setLoading(false))
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => {
+      active = false
+    }
   }, [editId])
 
   useEffect(() => {
@@ -150,6 +174,7 @@ export default function InvoiceForm() {
               unit_price: price,
               base_unit_price: price,
               price_adjust_percent: 0,
+              visibility: product ? productVisibility(product) : null,
               notes: it.notes || '',
             }
           }),

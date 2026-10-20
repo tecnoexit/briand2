@@ -9,6 +9,7 @@ import { addProductToItems } from '../lib/items'
 import ClientSection from '../components/ClientSection'
 import ProductsPanel from '../components/ProductsPanel'
 import ItemsTable from '../components/ItemsTable'
+import { productVisibility } from '../components/ItemsEditor'
 
 function defaultValidUntil() {
   const d = new Date()
@@ -122,6 +123,7 @@ export default function QuoteForm() {
               base_unit_price:
                 it.base_unit_price != null ? Number(it.base_unit_price) : price,
               price_adjust_percent: Number(it.price_adjust_percent ?? 0),
+              visibility: product ? productVisibility(product) : null,
               notes: it.notes || '',
             }
           }),

@@ -1,4 +1,5 @@
 import { round2, unitPriceFor } from './format'
+import { productVisibility } from '../components/ItemsEditor'
 
 export function addProductToItems(items, product, isDistribuidor, currencies) {
   const price = round2(unitPriceFor(product, isDistribuidor, currencies))
@@ -12,6 +13,7 @@ export function addProductToItems(items, product, isDistribuidor, currencies) {
     unit_price: price,
     base_unit_price: price,
     price_adjust_percent: 0,
+    visibility: productVisibility(product),
     notes: '',
   }
   if (existing) {
@@ -32,6 +34,7 @@ export function addManualItem(items) {
       unit_price: 0,
       base_unit_price: 0,
       price_adjust_percent: 0,
+      visibility: null,
       notes: '',
     },
     ...items,

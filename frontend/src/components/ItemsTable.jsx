@@ -14,6 +14,36 @@ function applyUnitPrice(item, raw) {
   return { ...item, base_unit_price: unit_price, price_adjust_percent: 0, unit_price }
 }
 
+function visibilityCellClass(v) {
+  if (v === 'distribuidor_only') return 'bg-blue-50'
+  if (v === 'regular_only') return 'bg-amber-50'
+  return ''
+}
+
+function visibilityBadge(v) {
+  if (v === 'distribuidor_only') {
+    return (
+      <span
+        title="Producto exclusivo para clientes distribuidores"
+        className="mt-1 inline-block rounded bg-blue-600 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white"
+      >
+        Solo dist.
+      </span>
+    )
+  }
+  if (v === 'regular_only') {
+    return (
+      <span
+        title="Producto exclusivo para clientes regulares"
+        className="mt-1 inline-block rounded bg-amber-600 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white"
+      >
+        Solo cli.
+      </span>
+    )
+  }
+  return null
+}
+
 export default function ItemsTable({ items, onChange, symbol = '$', showPrices = true }) {
   const updateItem = (key, field, value) =>
     onChange(items.map((it) => (it.key === key ? { ...it, [field]: value } : it)))
@@ -49,12 +79,13 @@ export default function ItemsTable({ items, onChange, symbol = '$', showPrices =
             ) : (
               items.map((it) => (
                 <tr key={it.key} className="border-b border-slate-100 align-top">
-                  <td className="py-2 pr-2">
+                  <td className={`py-2 pr-2 ${visibilityCellClass(it.visibility)}`}>
                     <input
                       value={it.product_code}
                       onChange={(e) => updateItem(it.key, 'product_code', e.target.value)}
                       className="w-24 rounded border border-slate-200 px-2 py-1 text-xs"
                     />
+                    {visibilityBadge(it.visibility)}
                   </td>
                   <td className="py-2 text-center">
                     <input
