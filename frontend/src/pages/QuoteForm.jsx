@@ -124,6 +124,8 @@ export default function QuoteForm() {
                 it.base_unit_price != null ? Number(it.base_unit_price) : price,
               price_adjust_percent: Number(it.price_adjust_percent ?? 0),
               visibility: product ? productVisibility(product) : null,
+              distribuidor_discount_enabled: !!product?.distribuidor_discount_enabled,
+              distribuidor_discount_percent: Number(product?.distribuidor_discount_percent ?? 0),
               notes: it.notes || '',
             }
           }),

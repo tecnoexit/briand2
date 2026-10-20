@@ -14,6 +14,8 @@ export function addProductToItems(items, product, isDistribuidor, currencies) {
     base_unit_price: price,
     price_adjust_percent: 0,
     visibility: productVisibility(product),
+    distribuidor_discount_enabled: !!product.distribuidor_discount_enabled,
+    distribuidor_discount_percent: Number(product.distribuidor_discount_percent ?? 0),
     notes: '',
   }
   if (existing) {
@@ -35,6 +37,8 @@ export function addManualItem(items) {
       base_unit_price: 0,
       price_adjust_percent: 0,
       visibility: null,
+      distribuidor_discount_enabled: false,
+      distribuidor_discount_percent: 0,
       notes: '',
     },
     ...items,
