@@ -16,7 +16,6 @@ function applyUnitPrice(item, raw) {
 
 function visibilityCellClass(it) {
   if (it.distribuidor_discount_enabled) return 'bg-green-50'
-  if (it.visibility === 'regular_only') return 'bg-amber-50'
   return ''
 }
 
@@ -30,16 +29,6 @@ function visibilityBadge(it) {
         className="mt-1 inline-block rounded bg-green-600 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white"
       >
         {label}
-      </span>
-    )
-  }
-  if (it.visibility === 'regular_only') {
-    return (
-      <span
-        title="Producto exclusivo para clientes regulares"
-        className="mt-1 inline-block rounded bg-amber-600 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white"
-      >
-        Solo cli.
       </span>
     )
   }
