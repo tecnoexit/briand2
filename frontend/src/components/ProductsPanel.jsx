@@ -2,9 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { Plus, Search } from 'lucide-react'
 import api from '../api/client'
 import { formatMoney, round2, unitPriceFor } from '../lib/format'
+import { productVisibility } from './ItemsEditor'
 
 function productBadges(p) {
+  const v = productVisibility(p)
   const badges = []
+  if (v === 'distribuidor_only') badges.push({ label: 'SOLO DIST.', cls: 'bg-blue-600 text-white' })
+  if (v === 'regular_only') badges.push({ label: 'SOLO CLI.', cls: 'bg-amber-600 text-white' })
   if (p.distribuidor_discount_enabled) {
     badges.push({
       label: `DIST +${Number(p.distribuidor_discount_percent || 0).toFixed(0)}%`,
