@@ -4,8 +4,8 @@ import { Eye, Loader2, Pencil, Printer, Search, X } from 'lucide-react'
 import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { isAdmin } from '../lib/roles'
-import { formatDate, formatMoney } from '../lib/format'
-import { PAYMENT_METHODS, paymentLabel, voidStatusBadge, voidStatusLabel } from '../lib/roles'
+import { formatDate, formatDay, formatMoney } from '../lib/format'
+import { PAYMENT_METHODS, paymentLabel } from '../lib/roles'
 import ClientTypeBadge from '../components/ClientTypeBadge'
 
 function SummaryCard({ label, value }) {
@@ -94,7 +94,7 @@ function InvoiceDetail({ id, onClose }) {
               </div>
               <div className="text-right text-sm">
                 <p className="font-semibold text-slate-800">Factura #{invoice.id}</p>
-                <p className="text-slate-500">{formatDate(invoice.created_at)}</p>
+                <p className="text-slate-500">{formatDay(invoice.created_at)}</p>
               </div>
             </div>
 
@@ -105,28 +105,14 @@ function InvoiceDetail({ id, onClose }) {
                 {invoice.client_type && (
                   <ClientTypeBadge type={invoice.client_type} />
                 )}
-                {invoice.client_phone && <p className="text-slate-500">{invoice.client_phone}</p>}
-                {invoice.client_email && <p className="text-slate-500">{invoice.client_email}</p>}
               </div>
               <div className="text-right">
-                <p className="text-slate-400">Fecha</p>
-                <p className="font-medium text-slate-800">{formatDate(invoice.created_at)}</p>
                 {invoice.seller?.name && (
                   <>
-                    <p className="mt-2 text-slate-400">Vendedor</p>
+                    <p className="text-slate-400">Vendedor</p>
                     <p className="text-slate-700">{invoice.seller.name}</p>
                   </>
                 )}
-                <p className="mt-2 text-slate-400">Pago</p>
-                <p className="text-slate-700">{paymentLabel(invoice.payment_method)}</p>
-                <p className="mt-2 text-slate-400">Estado</p>
-                <span
-                  className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${voidStatusBadge(
-                    invoice.void_status,
-                  )}`}
-                >
-                  {voidStatusLabel(invoice.void_status)}
-                </span>
               </div>
             </div>
 
