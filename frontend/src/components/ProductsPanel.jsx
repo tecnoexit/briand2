@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Plus, Search } from 'lucide-react'
 import api from '../api/client'
 import { formatMoney, round2, unitPriceFor } from '../lib/format'
-import { productVisibility, visibleForProduct } from './ItemsEditor'
+import { productVisibility } from './ItemsEditor'
 
 function productBadges(p) {
   const v = productVisibility(p)
@@ -20,55 +20,37 @@ function productBadges(p) {
 
 export default function ProductsPanel({ isDistribuidor, currencies = [], onAdd, showPrices = true }) {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState([])
   const [allProducts, setAllProducts] = useState([])
-  const [openQuote, setOpenQuote] = useState(false)
+  const [loading, setLoading] = useState(true)
   const symbol = '$'
 
   useEffect(() => {
-    if (openQuote) return
-    const q = query.trim()
-    if (q.length < 1) {
-      setResults([])
-      return
-    }
-    const t = setTimeout(async () => {
-      try {
-        const { data } = await api.get('/products', { params: { search: q, all: 1 } })
-        setResults(data.data || data || [])
-      } catch {
-        setResults([])
-      }
-    }, 300)
-    return () => clearTimeout(t)
-  }, [query, openQuote])
-
-  useEffect(() => {
-    if (!openQuote) {
-      setAllProducts([])
-      return
-    }
     let active = true
+    setLoading(true)
     api
       .get('/products', { params: { all: 1 } })
       .then(({ data }) => {
         if (active) setAllProducts(data.data || data || [])
       })
       .catch(() => {})
+      .finally(() => {
+        if (active) setLoading(false)
+      })
     return () => {
       active = false
     }
-  }, [openQuote])
+  }, [])
 
-  const canAdd = (p) => openQuote || visibleForProduct(p, isDistribuidor)
-
-  const shownProducts = openQuote
-    ? allProducts.filter((p) => {
-        const q = query.trim().toLowerCase()
-        if (!q) return true
-        return (p.name || '').toLowerCase().includes(q) || (p.code || '').toLowerCase().includes(q)
-      })
-    : results
+  const shownProducts = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return allProducts
+    return allProducts.filter(
+      (p) =>
+        (p.name || '').toLowerCase().includes(q) ||
+        (p.code || '').toLowerCase().includes(q) ||
+        (p.description || '').toLowerCase().includes(q),
+    )
+  }, [allProducts, query])
 
   return (
     <div>
@@ -82,24 +64,13 @@ export default function ProductsPanel({ isDistribuidor, currencies = [], onAdd, 
         />
       </div>
 
-      <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-slate-700">
-        <input
-          type="checkbox"
-          className="h-4 w-4 accent-green-600"
-          checked={openQuote}
-          onChange={(e) => setOpenQuote(e.target.checked)}
-        />
-        Presupuesto abierto: habilitar todos los productos
-      </label>
-
       <div className="mt-3 max-h-[480px] overflow-y-auto rounded-lg border border-slate-100">
-        {shownProducts.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-slate-400">
-            {openQuote ? 'Cargando productos…' : 'Escribí para buscar productos'}
-          </p>
+        {loading ? (
+          <p className="px-4 py-8 text-center text-sm text-slate-400">Cargando productos…</p>
+        ) : shownProducts.length === 0 ? (
+          <p className="px-4 py-8 text-center text-sm text-slate-400">No se encontraron productos</p>
         ) : (
           shownProducts.map((p) => {
-            const addable = canAdd(p)
             const price = round2(unitPriceFor(p, isDistribuidor, currencies))
             const badges = productBadges(p)
             return (
@@ -130,10 +101,9 @@ export default function ProductsPanel({ isDistribuidor, currencies = [], onAdd, 
                     </span>
                   )}
                   <button
-                    onClick={() => addable && onAdd(p)}
-                    disabled={!addable}
-                    title={addable ? 'Agregar' : 'Producto no disponible para este cliente'}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+                    onClick={() => onAdd(p)}
+                    title="Agregar"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg bg-green-600 text-white hover:bg-green-700"
                   >
                     <Plus size={16} />
                   </button>

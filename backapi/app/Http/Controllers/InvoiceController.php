@@ -5,10 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
-use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 class InvoiceController extends Controller
 {
@@ -127,7 +125,7 @@ class InvoiceController extends Controller
             'items.*.notes' => 'nullable|string',
         ]);
 
-        // Resolver tipo de cliente (para snapshot + validación)
+        // Resolver tipo de cliente (para snapshot)
         $clientType = 'regular';
         if ($request->filled('client_id')) {
             $client = Client::find($request->client_id);
@@ -135,47 +133,6 @@ class InvoiceController extends Controller
                 $clientType = $client->type ?: 'regular';
             }
         }
-        $isDistribuidor = $clientType === 'distribuidor';
-
-        // Guards de visibility:
-        //  - Cliente regular: NO puede facturar productos visibility='distribuidor_only'
-        //  - Cliente distribuidor: NO puede facturar productos visibility='regular_only'
-        $productIds = collect($request->items)
-            ->pluck('product_id')
-            ->filter()
-            ->unique()
-            ->values();
-
-        if ($productIds->isNotEmpty()) {
-            if (!$isDistribuidor) {
-                $invalid = Product::whereIn('id', $productIds)
-                    ->where('visibility', 'distribuidor_only')
-                    ->pluck('name', 'id');
-
-                if ($invalid->isNotEmpty()) {
-                    throw ValidationException::withMessages([
-                        'items' => [
-                            'Los siguientes productos son exclusivos para clientes distribuidores: '
-                                . $invalid->values()->implode(', '),
-                        ],
-                    ]);
-                }
-            } else {
-                $invalid = Product::whereIn('id', $productIds)
-                    ->where('visibility', 'regular_only')
-                    ->pluck('name', 'id');
-
-                if ($invalid->isNotEmpty()) {
-                    throw ValidationException::withMessages([
-                        'items' => [
-                            'Los siguientes productos son exclusivos para clientes regulares (no distribuidores): '
-                                . $invalid->values()->implode(', '),
-                        ],
-                    ]);
-                }
-            }
-        }
-
         return DB::transaction(function () use ($request, $clientType) {
             $taxRate = $request->input('tax_rate', 21);
 
