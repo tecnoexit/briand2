@@ -60,12 +60,12 @@ export default function InvoiceForm() {
   }, [])
 
   useEffect(() => {
-    if (!admin || editId || quoteId) return
+    if (!admin || quoteId) return
     api
       .get('/users')
       .then(({ data }) => setUsers(Array.isArray(data) ? data : []))
       .catch(() => {})
-  }, [admin, editId, quoteId])
+  }, [admin, quoteId])
 
   useEffect(() => {
     if (!editId) return
@@ -101,6 +101,7 @@ export default function InvoiceForm() {
         setModificationReason(data.modification_reason || '')
         if (data.created_at) setDateLabel(new Date(data.created_at).toLocaleDateString('es-AR'))
         if (data.seller?.name) setSellerName(data.seller.name)
+        if (data.seller_id) setSellerId(data.seller_id)
         setItems(
           (data.items || []).map((it, idx) => {
             const product = it.product_id ? map[it.product_id] : null
@@ -378,7 +379,7 @@ export default function InvoiceForm() {
           </div>
           <div>
             <label className="mb-1 block text-xs font-bold text-slate-600">Vendedor</label>
-            {admin && !editId && !quoteId ? (
+            {admin && !quoteId ? (
               <select
                 value={sellerId ?? user?.id ?? ''}
                 onChange={(e) => {

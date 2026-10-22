@@ -207,6 +207,7 @@ class InvoiceController extends Controller
             'tax_rate'             => 'nullable|numeric|min:0|max:100',
             'notes'                => 'nullable|string',
             'modification_reason'  => 'nullable|string',
+            'seller_id'            => 'nullable|integer|exists:users,id',
             'items'                => 'required|array|min:1',
             'items.*.product_id'   => 'nullable|integer|exists:products,id',
             'items.*.product_name' => 'required|string|max:255',
@@ -250,6 +251,7 @@ class InvoiceController extends Controller
                 'total'          => $subtotal + $taxAmount,
                 'notes'          => $request->notes,
                 'modification_reason' => $request->modification_reason,
+                'seller_id'      => $request->filled('seller_id') ? (int) $request->seller_id : $invoice->seller_id,
             ]);
 
             $invoice->items()->delete();
