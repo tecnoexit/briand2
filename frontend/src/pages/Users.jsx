@@ -6,7 +6,7 @@ import { ROLES, roleLabel } from '../lib/roles'
 import { formatDate } from '../lib/format'
 import Modal from '../components/Modal'
 
-const emptyForm = { name: '', email: '', password: '', role: 'vendedor' }
+const emptyForm = { name: '', email: '', password: '', role: 'vendedor', commission_rate: 0 }
 
 const roleBadge = {
   admin: 'bg-purple-100 text-purple-700',
@@ -54,7 +54,13 @@ export default function Users() {
 
   const openEdit = (u) => {
     setEditing(u)
-    setForm({ name: u.name ?? '', email: u.email ?? '', password: '', role: u.role ?? 'vendedor' })
+    setForm({
+      name: u.name ?? '',
+      email: u.email ?? '',
+      password: '',
+      role: u.role ?? 'vendedor',
+      commission_rate: u.commission_rate ?? 0,
+    })
     setFormError('')
     setShowForm(true)
   }
@@ -65,7 +71,12 @@ export default function Users() {
     setSaving(true)
     try {
       if (editing) {
-        const payload = { name: form.name.trim(), email: form.email.trim(), role: form.role }
+        const payload = {
+          name: form.name.trim(),
+          email: form.email.trim(),
+          role: form.role,
+          commission_rate: form.role === 'vendedor' ? Number(form.commission_rate || 0) : 0,
+        }
         if (form.password) payload.password = form.password
         await api.put(`/users/${editing.id}`, payload)
       } else {
@@ -74,6 +85,7 @@ export default function Users() {
           email: form.email.trim(),
           password: form.password,
           role: form.role,
+          commission_rate: form.role === 'vendedor' ? Number(form.commission_rate || 0) : 0,
         })
       }
       setShowForm(false)
@@ -147,6 +159,7 @@ export default function Users() {
               <th className="px-4 py-3">Nombre</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Rol</th>
+              <th className="px-4 py-3">Comisión</th>
               <th className="px-4 py-3">Alta</th>
               <th className="px-4 py-3 text-right">Acciones</th>
             </tr>
@@ -154,13 +167,13 @@ export default function Users() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
                   <Loader2 className="mx-auto animate-spin" />
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
                   No hay usuarios.
                 </td>
               </tr>
@@ -184,6 +197,9 @@ export default function Users() {
                     >
                       {roleLabel(u.role)}
                     </span>
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {u.role === 'vendedor' ? `${Number(u.commission_rate || 0).toFixed(2)}%` : '—'}
                   </td>
                   <td className="px-4 py-3 text-slate-500">{formatDate(u.created_at)}</td>
                   <td className="px-4 py-3">
@@ -265,6 +281,25 @@ export default function Users() {
                 ))}
               </select>
             </div>
+
+            {form.role === 'vendedor' && (
+              <div>
+                <label className="mb-1 block text-sm text-slate-600">Comisión (%) *</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={form.commission_rate}
+                  onChange={(e) => setForm({ ...form, commission_rate: e.target.value })}
+                  required
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-green-500"
+                />
+                <p className="mt-1 text-xs text-slate-400">
+                  Se calcula sobre el total de las facturas y solo afecta la cuenta corriente.
+                </p>
+              </div>
+            )}
 
             {formError && (
               <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</div>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Eye, Loader2, Pencil, Printer, Search, X } from 'lucide-react'
+import { Eye, Loader2, Pencil, Printer, Search, Trash2, X } from 'lucide-react'
 import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { isAdmin } from '../lib/roles'
@@ -198,6 +198,7 @@ export default function InvoicesList() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [page, setPage] = useState(1)
+  const [deletingId, setDeletingId] = useState(null)
 
   const fetchInvoices = useCallback(async () => {
     setLoading(true)
@@ -233,6 +234,20 @@ export default function InvoicesList() {
     const next = new URLSearchParams(searchParams)
     next.delete('invoice')
     setSearchParams(next, { replace: true })
+  }
+
+  const deleteInvoice = async (invoice) => {
+    if (!window.confirm(`¿Eliminar la factura #${invoice.id}? Esta acción no se puede deshacer.`)) return
+
+    setDeletingId(invoice.id)
+    try {
+      await api.delete(`/invoices/${invoice.id}`)
+      await fetchInvoices()
+    } catch (err) {
+      window.alert(err?.response?.data?.message || 'No se pudo eliminar la factura')
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   const symbol = '$'
@@ -387,13 +402,27 @@ export default function InvoicesList() {
                         <Eye size={16} />
                       </button>
                       {isAdmin(user) && (
-                        <button
-                          onClick={() => navigate(`/admin/facturacion?invoice=${inv.id}`)}
-                          className="rounded-lg border border-slate-300 p-1.5 text-slate-600 hover:bg-slate-50"
-                          title="Editar"
-                        >
-                          <Pencil size={16} />
-                        </button>
+                        <>
+                          <button
+                            onClick={() => navigate(`/admin/facturacion?invoice=${inv.id}`)}
+                            className="rounded-lg border border-slate-300 p-1.5 text-slate-600 hover:bg-slate-50"
+                            title="Editar"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button
+                            onClick={() => deleteInvoice(inv)}
+                            disabled={deletingId === inv.id}
+                            className="rounded-lg border border-red-200 p-1.5 text-red-600 hover:bg-red-50 disabled:cursor-wait disabled:opacity-50"
+                            title="Eliminar"
+                          >
+                            {deletingId === inv.id ? (
+                              <Loader2 size={16} className="animate-spin" />
+                            ) : (
+                              <Trash2 size={16} />
+                            )}
+                          </button>
+                        </>
                       )}
                     </div>
                   </td>

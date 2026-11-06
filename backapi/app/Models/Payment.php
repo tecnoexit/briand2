@@ -12,6 +12,7 @@ class Payment extends Model
     protected $fillable = [
         'seller_id',
         'amount',
+        'commission_adjustment',
         'method',
         'reference',
         'notes',
@@ -21,6 +22,7 @@ class Payment extends Model
 
     protected $casts = [
         'amount'  => 'decimal:2',
+        'commission_adjustment' => 'decimal:2',
         'paid_at' => 'datetime',
     ];
 

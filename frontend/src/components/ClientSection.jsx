@@ -47,7 +47,15 @@ export default function ClientSection({ client, onChange }) {
   }, [])
 
   const pick = (c) => {
-    onChange({ id: c.id, name: c.name, phone: c.phone, email: c.email, type: c.type || 'regular' })
+    onChange({
+      id: c.id,
+      name: c.name,
+      phone: c.phone,
+      email: c.email,
+      type: c.type || 'regular',
+      seller_id: c.seller_id || null,
+      seller: c.seller || null,
+    })
     setQuery('')
     setResults([])
   }
@@ -93,6 +101,8 @@ export default function ClientSection({ client, onChange }) {
         phone: saved.phone,
         email: saved.email,
         type: saved.type || 'regular',
+        seller_id: saved.seller_id || null,
+        seller: saved.seller || null,
       })
       setModalOpen(false)
     } catch (err) {

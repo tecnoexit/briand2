@@ -38,6 +38,7 @@ export default function InvoiceForm() {
   const [dateLabel, setDateLabel] = useState(() => new Date().toLocaleDateString('es-AR'))
   const [sellerName, setSellerName] = useState(() => user?.name || '—')
   const [sellerId, setSellerId] = useState(null)
+  const [sellerChangedManually, setSellerChangedManually] = useState(false)
   const [users, setUsers] = useState([])
 
   const [loading, setLoading] = useState(false)
@@ -48,9 +49,29 @@ export default function InvoiceForm() {
   const isDistribuidor = client?.type === 'distribuidor'
   const symbol = '$'
   const sellers = useMemo(
-    () => users.filter((u) => u.role === 'vendedor' || u.role === 'admin'),
-    [users],
+    () => {
+      const assignedId = client?.seller_id
+      const currentId = sellerId
+      const available = users.filter(
+        (u) => u.role === 'admin' || Number(u.id) === Number(assignedId) || Number(u.id) === Number(currentId),
+      )
+      if (user && !available.some((u) => Number(u.id) === Number(user.id))) available.push(user)
+      return available
+    },
+    [users, client?.seller_id, sellerId, user],
   )
+
+  const handleClientChange = (nextClient) => {
+    setClient(nextClient)
+    if (!admin || !nextClient) return
+
+    setSellerChangedManually(false)
+    const assignedId = nextClient.seller_id ?? nextClient.seller?.id
+    const nextSellerId = assignedId ? Number(assignedId) : Number(user?.id)
+    setSellerId(nextSellerId || null)
+    const assignedSeller = nextClient.seller || sellers.find((seller) => Number(seller.id) === nextSellerId)
+    setSellerName(assignedSeller?.name || user?.name || '—')
+  }
 
   const productsById = useRef({})
   const prevClientType = useRef(null)
@@ -94,6 +115,8 @@ export default function InvoiceForm() {
           phone: data.client_phone,
           email: data.client_email,
           type: data.client_type || 'regular',
+          seller_id: data.seller_id || null,
+          seller: data.seller || null,
         })
         setPaymentMethod(data.payment_method || 'efectivo')
         setTaxRate(0)
@@ -102,6 +125,7 @@ export default function InvoiceForm() {
         if (data.created_at) setDateLabel(new Date(data.created_at).toLocaleDateString('es-AR'))
         if (data.seller?.name) setSellerName(data.seller.name)
         if (data.seller_id) setSellerId(data.seller_id)
+        setSellerChangedManually(false)
         setItems(
           (data.items || []).map((it, idx) => {
             const product = it.product_id ? map[it.product_id] : null
@@ -147,12 +171,15 @@ export default function InvoiceForm() {
           phone: data.client_phone,
           email: data.client_email,
           type: data.client_type || 'regular',
+          seller_id: data.seller_id || null,
+          seller: data.seller || null,
         })
         setTaxRate(0)
         setNotes(data.notes || '')
         if (data.created_at) setDateLabel(new Date(data.created_at).toLocaleDateString('es-AR'))
         if (data.seller?.name) setSellerName(data.seller.name)
         if (data.seller_id) setSellerId(data.seller_id)
+        setSellerChangedManually(false)
 
         const ids = [...new Set((data.items || []).map((it) => it.product_id).filter(Boolean))]
         const map = {}
@@ -249,6 +276,9 @@ export default function InvoiceForm() {
     payment_method: paymentMethod,
     tax_rate: Number(taxRate),
     notes: notes || null,
+    seller_id: sellerChangedManually
+      ? sellerId || user?.id || undefined
+      : client?.seller_id ?? client?.seller?.id ?? sellerId ?? user?.id ?? undefined,
     items: items.map((it) => ({
       product_id: it.product_id || null,
       product_name: it.product_name,
@@ -271,7 +301,6 @@ export default function InvoiceForm() {
     }
     const payload = {
       ...buildPayload(),
-      seller_id: sellerId || undefined,
       modification_reason: editId ? modificationReason || null : undefined,
     }
     setSaving(true)
@@ -354,7 +383,7 @@ export default function InvoiceForm() {
 
       {/* === Sección superior: cliente y datos de factura === */}
       <section className="mb-5 rounded-xl border border-slate-200 bg-white p-5">
-        <ClientSection client={client} onChange={setClient} />
+        <ClientSection client={client} onChange={handleClientChange} />
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <div>
@@ -384,6 +413,7 @@ export default function InvoiceForm() {
                 value={sellerId ?? user?.id ?? ''}
                 onChange={(e) => {
                   const id = e.target.value ? Number(e.target.value) : null
+                  setSellerChangedManually(true)
                   setSellerId(id)
                   const u = sellers.find((x) => x.id === id)
                   setSellerName(u?.name || user?.name || '—')
@@ -392,7 +422,7 @@ export default function InvoiceForm() {
               >
                 {sellers.map((u) => (
                   <option key={u.id} value={u.id}>
-                    {u.name}
+                    {u.name}{u.role === 'admin' ? ' (Administrador)' : ''}
                   </option>
                 ))}
               </select>
@@ -517,4 +547,3 @@ export default function InvoiceForm() {
     </div>
   )
 }
-

@@ -11,7 +11,12 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::query();
+        $query = Product::query()->select([
+            'id', 'name', 'description', 'code', 'price', 'precio_lista', 'impuesto',
+            'profit_margin', 'currency_id', 'stock', 'image_url',
+            'distribuidor_discount_enabled', 'distribuidor_discount_percent',
+            'distribuidor_only', 'visibility', 'created_at', 'updated_at',
+        ]);
 
         // 0. Filtro por rol según la nueva columna `visibility`:
         //   - 'cliente'      → no ve productos `distribuidor_only`
@@ -26,7 +31,12 @@ class ProductController extends Controller
             }
         }
 
-        // 1. Filtro de búsqueda Inteligente
+        // 1. Búsqueda exacta por código. Aprovecha el índice único existente.
+        if ($request->filled('code')) {
+            $query->where('code', $request->string('code')->trim()->toString());
+        }
+
+        // 2. Filtro de búsqueda inteligente por texto.
         if ($request->filled('search')) {
             $search = $request->search;
             
@@ -47,7 +57,7 @@ class ProductController extends Controller
             });
         }
 
-        // 2. Filtro por moneda (currency_id). Acepta un ID o varios separados por coma.
+        // 3. Filtro por moneda (currency_id). Acepta un ID o varios separados por coma.
         if ($request->filled('currency_id')) {
             $currencyIds = collect(explode(',', (string) $request->currency_id))
                 ->map(fn ($v) => (int) trim($v))
@@ -59,7 +69,7 @@ class ProductController extends Controller
             }
         }
 
-        // 2.b Filtro por visibilidad (all | distribuidor_only | regular_only).
+        // 3.b Filtro por visibilidad (all | distribuidor_only | regular_only).
         //     Contempla filas legacy donde `visibility` es null y se usa `distribuidor_only`.
         if ($request->filled('visibility')) {
             $vis = $request->visibility;
@@ -82,7 +92,7 @@ class ProductController extends Controller
             }
         }
 
-        // 3. Lógica de Ordenamiento
+        // 4. Lógica de Ordenamiento
         // Se agrega 'profit_margin' a las columnas permitidas
         $allowedSorts = ['id', 'name', 'code', 'price', 'profit_margin', 'stock', 'updated_at'];
         $sort = $request->get('sort', 'updated_at'); 
@@ -92,7 +102,7 @@ class ProductController extends Controller
             $query->orderBy($sort, $direction === 'asc' ? 'asc' : 'desc');
         }
 
-        // 4. Si se solicita la lista completa
+        // 5. Si se solicita la lista completa (reservado para exportaciones).
         // Campos de precio que el rol depósito NO debe ver.
         $priceFields = ['precio_lista', 'price', 'impuesto', 'profit_margin',
                         'distribuidor_discount_enabled', 'distribuidor_discount_percent'];
@@ -113,7 +123,7 @@ class ProductController extends Controller
             ]);
         }
 
-        // 5. Paginación normal
+        // 6. Paginación normal
         $paginated = $query->paginate(50);
         if ($isDeposito) {
             $paginated->getCollection()->makeHidden($priceFields);

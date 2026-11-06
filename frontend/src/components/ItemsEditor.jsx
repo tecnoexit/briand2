@@ -54,8 +54,12 @@ export default function ItemsEditor({
     }
     const t = setTimeout(async () => {
       try {
-        const { data } = await api.get('/products', { params: { search: query, all: 1 } })
-        const list = data.data || data || []
+        const value = query.trim()
+        const params = /^[A-Za-z0-9]+-\d+$/.test(value)
+          ? { code: value }
+          : { search: value }
+        const { data } = await api.get('/products', { params })
+          const list = data.data || data || []
         setResults(list)
         productsRef.current = {
           ...productsRef.current,

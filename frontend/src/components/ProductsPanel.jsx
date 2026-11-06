@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Plus, Search } from 'lucide-react'
 import api from '../api/client'
 import { formatMoney, round2, unitPriceFor } from '../lib/format'
@@ -20,37 +20,35 @@ function productBadges(p) {
 
 export default function ProductsPanel({ isDistribuidor, currencies = [], onAdd, showPrices = true }) {
   const [query, setQuery] = useState('')
-  const [allProducts, setAllProducts] = useState([])
+  const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const symbol = '$'
 
   useEffect(() => {
     let active = true
     setLoading(true)
-    api
-      .get('/products', { params: { all: 1 } })
+    const timer = setTimeout(() => {
+      const value = query.trim()
+      const params = value
+        ? /^[A-Za-z0-9]+-\d+$/.test(value)
+          ? { code: value }
+          : { search: value }
+        : {}
+      api
+      .get('/products', { params })
       .then(({ data }) => {
-        if (active) setAllProducts(data.data || data || [])
+        if (active) setProducts(data.data || data || [])
       })
       .catch(() => {})
       .finally(() => {
         if (active) setLoading(false)
       })
+    }, 300)
     return () => {
       active = false
+      clearTimeout(timer)
     }
-  }, [])
-
-  const shownProducts = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return allProducts
-    return allProducts.filter(
-      (p) =>
-        (p.name || '').toLowerCase().includes(q) ||
-        (p.code || '').toLowerCase().includes(q) ||
-        (p.description || '').toLowerCase().includes(q),
-    )
-  }, [allProducts, query])
+  }, [query])
 
   return (
     <div>
@@ -67,10 +65,10 @@ export default function ProductsPanel({ isDistribuidor, currencies = [], onAdd, 
       <div className="mt-3 max-h-[480px] overflow-y-auto rounded-lg border border-slate-100">
         {loading ? (
           <p className="px-4 py-8 text-center text-sm text-slate-400">Cargando productos…</p>
-        ) : shownProducts.length === 0 ? (
+        ) : products.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-slate-400">No se encontraron productos</p>
         ) : (
-          shownProducts.map((p) => {
+          products.map((p) => {
             const price = round2(unitPriceFor(p, isDistribuidor, currencies))
             const badges = productBadges(p)
             return (

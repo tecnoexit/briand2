@@ -28,6 +28,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
             'role' => 'required|string|in:admin,cliente,vendedor,distribuidor,deposito',
+            'commission_rate' => 'nullable|numeric|min:0|max:100',
         ]);
 
         $user = User::create([
@@ -35,6 +36,7 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password), // Encriptamos la clave
             'role' => $request->role,
+            'commission_rate' => $request->input('commission_rate', 0),
         ]);
 
         return response()->json($user, 201);
@@ -57,9 +59,10 @@ class UserController extends Controller
             'name' => 'string|max:255',
             'email' => 'string|email|max:255|unique:users,email,' . $user->id,
             'role' => 'string|in:admin,cliente,vendedor,distribuidor,deposito',
+            'commission_rate' => 'nullable|numeric|min:0|max:100',
         ]);
 
-        $user->update($request->only(['name', 'email', 'role']));
+        $user->update($request->only(['name', 'email', 'role', 'commission_rate']));
 
         // Si envían una nueva contraseña, la actualizamos por separado
         if ($request->filled('password')) {

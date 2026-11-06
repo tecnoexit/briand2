@@ -95,16 +95,20 @@ export default function SellerAccount({ mode = 'mine' }) {
             Cuenta corriente · {data?.seller?.name || '…'}
           </h1>
           <p className="text-xs text-slate-500">
-            Saldo = saldo inicial + boletas vigentes − pagos registrados
+            Saldo = saldo inicial + boletas − comisiones − pagos registrados
           </p>
         </div>
       </div>
 
       {error && <div className="mb-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div>}
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Card label="Saldo inicial" value={formatMoney(data?.opening_balance)} />
         <Card label="Boletas vigentes" value={formatMoney(data?.invoiced)} />
+        <Card
+          label={`Comisiones (${Number(data?.commission_rate || 0).toFixed(2)}%)`}
+          value={formatMoney(data?.commission)}
+        />
         <Card label="Pagos" value={formatMoney(data?.paid)} />
         <Card label="Saldo pendiente" value={formatMoney(data?.balance)} accent />
       </div>
@@ -337,6 +341,7 @@ export default function SellerAccount({ mode = 'mine' }) {
 
 function PaymentModal({ sellerId, onClose, onSaved }) {
   const [amount, setAmount] = useState('')
+  const [commissionAdjustment, setCommissionAdjustment] = useState('0')
   const [method, setMethod] = useState('efectivo')
   const [reference, setReference] = useState('')
   const [paidAt, setPaidAt] = useState(() => new Date().toISOString().slice(0, 10))
@@ -351,6 +356,7 @@ function PaymentModal({ sellerId, onClose, onSaved }) {
       await api.post('/cuenta-corriente/pagos', {
         seller_id: sellerId,
         amount: Number(amount),
+        commission_adjustment: Number(commissionAdjustment || 0),
         method,
         reference: reference || null,
         paid_at: paidAt || null,
@@ -368,6 +374,22 @@ function PaymentModal({ sellerId, onClose, onSaved }) {
     <Modal title="Registrar pago" onClose={onClose}>
       {err && <p className="mb-3 text-sm text-red-600">{err}</p>}
       <div className="space-y-3">
+        <div>
+          <label className="mb-1 block text-xs font-bold text-slate-600">
+            Ajuste de comisión
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            value={commissionAdjustment}
+            onChange={(e) => setCommissionAdjustment(e.target.value)}
+            placeholder="0"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <p className="mt-1 text-xs text-slate-400">
+            Positivo suma comisión; negativo la descuenta. La comisión automática se calcula por porcentaje.
+          </p>
+        </div>
         <div>
           <label className="mb-1 block text-xs font-bold text-slate-600">Importe</label>
           <input

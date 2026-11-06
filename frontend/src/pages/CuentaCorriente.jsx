@@ -26,15 +26,16 @@ export default function CuentaCorriente() {
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-slate-800">Cuenta corriente por vendedor</h1>
         <p className="text-xs text-slate-500">
-          Saldo = saldo inicial + boletas vigentes − pagos registrados
+           Saldo = saldo inicial + boletas − comisiones − pagos registrados
         </p>
       </div>
 
       {error && <div className="mb-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div>}
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard label="Saldo inicial total" value={formatMoney(totals.opening_balance)} />
-        <SummaryCard label="Boletas vigentes" value={formatMoney(totals.invoiced)} />
+       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+         <SummaryCard label="Saldo inicial total" value={formatMoney(totals.opening_balance)} />
+         <SummaryCard label="Boletas vigentes" value={formatMoney(totals.invoiced)} />
+         <SummaryCard label="Comisiones" value={formatMoney(totals.commission)} />
         <SummaryCard label="Pagos" value={formatMoney(totals.paid)} />
         <SummaryCard label="Saldo pendiente total" value={formatMoney(totals.balance)} accent />
       </div>
@@ -47,7 +48,8 @@ export default function CuentaCorriente() {
                 <th className="px-4 py-3">Vendedor</th>
                 <th className="px-4 py-3 text-right">Saldo inicial</th>
                 <th className="px-4 py-3 text-right">Boletas</th>
-                <th className="px-4 py-3 text-right">Pagos</th>
+                 <th className="px-4 py-3 text-right">Comisiones</th>
+                 <th className="px-4 py-3 text-right">Pagos</th>
                 <th className="px-4 py-3 text-right">Saldo pendiente</th>
                 <th className="px-4 py-3 text-right">Acciones</th>
               </tr>
@@ -55,13 +57,13 @@ export default function CuentaCorriente() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={7} className="px-4 py-10 text-center text-slate-400">
                     <Loader2 className="mx-auto animate-spin" />
                   </td>
                 </tr>
               ) : sellers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={7} className="px-4 py-10 text-center text-slate-400">
                     No hay vendedores.
                   </td>
                 </tr>
@@ -76,7 +78,8 @@ export default function CuentaCorriente() {
                       {formatMoney(row.opening_balance)}
                     </td>
                     <td className="px-4 py-3 text-right text-slate-600">{formatMoney(row.invoiced)}</td>
-                    <td className="px-4 py-3 text-right text-slate-600">{formatMoney(row.paid)}</td>
+                   <td className="px-4 py-3 text-right text-slate-600">{formatMoney(row.commission)}</td>
+                   <td className="px-4 py-3 text-right text-slate-600">{formatMoney(row.paid)}</td>
                     <td className="px-4 py-3 text-right font-semibold text-slate-900">
                       {formatMoney(row.balance)}
                     </td>

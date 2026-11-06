@@ -28,10 +28,11 @@ class AccountController extends Controller
         $totals = $result->reduce(function ($carry, $row) {
             $carry['opening_balance'] += $row['opening_balance'];
             $carry['invoiced'] += $row['invoiced'];
+            $carry['commission'] += $row['commission'];
             $carry['paid'] += $row['paid'];
             $carry['balance'] += $row['balance'];
             return $carry;
-        }, ['opening_balance' => 0, 'invoiced' => 0, 'paid' => 0, 'balance' => 0]);
+        }, ['opening_balance' => 0, 'invoiced' => 0, 'commission' => 0, 'paid' => 0, 'balance' => 0]);
 
         return response()->json([
             'sellers' => $result->values(),
@@ -63,6 +64,7 @@ class AccountController extends Controller
         $request->validate([
             'seller_id' => 'required|integer|exists:users,id',
             'amount'    => 'required|numeric|min:0',
+            'commission_adjustment' => 'nullable|numeric',
             'method'    => 'required|string|in:efectivo,transferencia,cheque,otro',
             'reference' => 'nullable|string|max:255',
             'notes'     => 'nullable|string',
@@ -72,6 +74,7 @@ class AccountController extends Controller
         $payment = Payment::create([
             'seller_id'  => $request->seller_id,
             'amount'     => $request->amount,
+            'commission_adjustment' => $request->input('commission_adjustment', 0),
             'method'     => $request->method,
             'reference'  => $request->reference,
             'notes'      => $request->notes,
@@ -145,12 +148,19 @@ class AccountController extends Controller
             ->where('void_status', '!=', 'anulada')
             ->sum('total');
         $paid = (float) Payment::where('seller_id', $sellerId)->sum('amount');
+        $seller = User::find($sellerId);
+        $commissionRate = (float) ($seller->commission_rate ?? 0);
+        $automaticCommission = $invoiced * $commissionRate / 100;
+        $commissionAdjustments = (float) Payment::where('seller_id', $sellerId)->sum('commission_adjustment');
+        $commission = $automaticCommission + $commissionAdjustments;
 
         return [
             'opening_balance' => round($opening, 2),
             'invoiced' => round($invoiced, 2),
+            'commission_rate' => round($commissionRate, 2),
+            'commission' => round($commission, 2),
             'paid' => round($paid, 2),
-            'balance' => round($opening + $invoiced - $paid, 2),
+            'balance' => round($opening + $invoiced - $commission - $paid, 2),
         ];
     }
 }
